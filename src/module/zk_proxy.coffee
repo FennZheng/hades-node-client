@@ -3,7 +3,7 @@ zkConfig = require('../setting/config.json')
 
 CONFIG_ROOT_PATH = "/hades/configs/"
 #TODO 要处理sessionTimeout
-class zkProxy
+class ZkProxy
 	constructor : ()->
 		throw new Error("hades-node-client init error: project is null in config.json") if not config.project?
 		@_PROJECT_PATH = CONFIG_ROOT_PATH + "/" +config.project
@@ -32,32 +32,38 @@ class zkProxy
 
 	setConfig : (name, data)->
 		path = @_buildPath(name)
-		if not @_existPath1(path)
+		if not @_exist(path)
 			@_createPath(path)
-		@_setData(path, data)
+		@_set(path, data)
 		return
 
 
 	getConfig : (name)->
-		return
+		path = @_buildPath(name)
+		@_client.getData(path, (error, data, stat)->
+			if error
+				console.log(error.stack)
+				return null
+			return data
+		)
 
-	reloadConfig : (name)->
-		return
 
 	_createPath : (path)->
 		@_client.create(path, (error)->
 			if error
 				console.log('Failed to create node: %s due to: %s.', path, error)
 			console.log('Node: %s is successfully created.', path)
+		)
 
-	_setData : (path, data)->
+	_set : (path, data)->
 		@_client.setData(path, null, -1,  (error, stat)->
 			if error
 				console.log(error.stack)
 			console.log('Data is set at path :%s', path)
+		)
 
 	# return false if error
-	_existPath : (path)->
+	_exist : (path)->
 		@_client.exists(path, (error, stat)->
 			if error
 				console.log(error.stack)
@@ -68,3 +74,7 @@ class zkProxy
 
 	_buildPath : (name)->
 		@_PROJECT_PATH + "/" + name
+
+instance = new ZkProxy()
+
+exports.ZkProxy = instance
