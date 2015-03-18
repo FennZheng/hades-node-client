@@ -2,6 +2,5 @@
 	"project" : "testProject",
 	"hostList" : "localhost:2181",
 	"retries" : 3,
-	"sessionTimeout" : 60,
-	"localConfigRoot" : "../../setting/"
+	"sessionTimeout" : 60
 }
