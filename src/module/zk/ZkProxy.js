@@ -37,32 +37,32 @@
       this._set(_path, data);
     };
 
-    ZkProxy.prototype.getConfig = function(name) {
+    ZkProxy.prototype.loadConfig = function(name) {
       var _path;
       _path = this._buildPath(name);
-      console.log("getConfig name:" + name + " ,path:" + _path);
+      console.log("loadConfig name:" + name + " ,path:" + _path);
       return this._client.getData(_path, null, function(error, data, stat) {
         if (error) {
           return console.log(error.stack);
         } else {
           if (data != null) {
-            return cb(name, data.toString("utf-8"));
+            return ConfigMap[name] = data.toString("utf-8");
           } else {
-            return cb(name, null);
+            return delete ConfigMap[name];
           }
         }
       });
     };
 
-    ZkProxy.prototype.getConfigAndWatch = function(name) {
+    ZkProxy.prototype.loadConfigAndWatch = function(name) {
       var _path;
       _path = this._buildPath(name);
-      console.log("getConfigAndWatch name:" + name + " ,path:" + _path);
+      console.log("loadConfigAndWatch name:" + name + " ,path:" + _path);
       return this._client.getData(_path, function(event) {
         console.log("receive event:" + zookeeper.Event.NODE_DATA_CHANGED);
         switch (event.getType) {
           case zookeeper.Event.NODE_DATA_CHANGED:
-            return _getDataAndNotify(path, name);
+            return this.loadConfigAndWatch(name);
           default:
             return console.log("path " + (event.getPath()) + " changed: " + (event.getType()));
         }
@@ -71,51 +71,9 @@
           return console.log(error.stack);
         } else {
           if (data != null) {
-            return cb(name, data.toString("utf-8"));
+            return ConfigMap[name] = data.toString("utf-8");
           } else {
-            return cb(name, null);
-          }
-        }
-      });
-    };
-
-    ZkProxy.prototype.getConfig = function(name) {
-      var _path;
-      _path = this._buildPath(name);
-      console.log("getConfig name:" + name + " ,path:" + _path);
-      return this._client.getData(_path, null, function(error, data, stat) {
-        if (error) {
-          return console.log(error.stack);
-        } else {
-          if (data != null) {
-            return cb(name, data.toString("utf-8"));
-          } else {
-            return cb(name, null);
-          }
-        }
-      });
-    };
-
-    ZkProxy.prototype.getConfigAndWatch = function(name) {
-      var _path;
-      _path = this._buildPath(name);
-      console.log("getConfigAndWatch name:" + name + " ,path:" + _path);
-      return this._client.getData(_path, function(event) {
-        console.log("receive event:" + zookeeper.Event.NODE_DATA_CHANGED);
-        switch (event.getType) {
-          case zookeeper.Event.NODE_DATA_CHANGED:
-            return _getDataAndNotify(path, name);
-          default:
-            return console.log("path " + (event.getPath()) + " changed: " + (event.getType()));
-        }
-      }, function(error, data, stat) {
-        if (error) {
-          return console.log(error.stack);
-        } else {
-          if (data != null) {
-            return cb(name, data.toString("utf-8"));
-          } else {
-            return cb(name, null);
+            return delete ConfigMap[name];
           }
         }
       });
