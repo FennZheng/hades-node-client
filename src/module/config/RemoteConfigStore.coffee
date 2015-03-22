@@ -1,0 +1,3 @@
+ConfigMap = {}
+
+exports.ConfigMap = ConfigMap

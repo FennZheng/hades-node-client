@@ -12,17 +12,16 @@ class LocalConfig extends Module
 		if path?
 			CONFIG_PATH = path
 
-	## @Override
-	load : ()->
-		# lazy load by @get
-
-	## @Override name:xx/xx.json
-	get : (name, isDynamic)->
+	# @Override name:xx/xx.json
+	get : (name)->
+		throw new Error("config can not end with .json") if name.slice(-5,-1) == ".json"
 		if not ConfigMap[name]?
-			if name.slice(-5,-1) == ".json"
-				ConfigMap[name] = require(CONFIG_PATH+name)
-			else
-				ConfigMap[name] = require(CONFIG_PATH+name+".json")
+			ConfigMap[name] = require(CONFIG_PATH+name+".json")
 		ConfigMap[name]
 
-exports.LocalConfig = LocalConfig
+	# @Override
+	getDynamic : (name)->
+		@get(name)
+
+_instance = new LocalConfig()
+exports.LocalConfig = _instance

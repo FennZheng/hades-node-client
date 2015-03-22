@@ -7,39 +7,16 @@
   Module = require("../../lib/Module");
 
   IConfig = (function(_super) {
-    var IS_DYNAMIC, IS_STATIC, get, load;
 
     __extends(IConfig, _super);
-
-    /*
-    		static pool
-    */
-
 
     function IConfig() {
       return IConfig.__super__.constructor.apply(this, arguments);
     }
 
-    IS_DYNAMIC = true;
+    IConfig.prototype.get = function(name) {};
 
-    IS_STATIC = false;
-
-    /*
-    	    load config
-    */
-
-
-    load = function() {};
-
-    /*
-    	    fetch config
-    	    @param name : config name，unique
-    	    @param isDynamic :
-    	        {true:dynamic（only support remote config） false:static}
-    */
-
-
-    get = function(name, isDynamic) {};
+    IConfig.prototype.getDynamic = function(name) {};
 
     return IConfig;
 
