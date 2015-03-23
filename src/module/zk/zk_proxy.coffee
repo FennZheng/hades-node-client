@@ -5,27 +5,27 @@ RemoteConfigCache = require('../config/remote_config_cache').RemoteConfigCache
 CONFIG_ROOT_PATH = "/hades/configs"
 
 #TODO deal with sessionTimeout and connection closed event
-
+# event started with _ is inner event
 @_event = {
 	EVENT_ALL_LOAD_COMPLETE : "ALL_LOAD_COMPLETE",
-	EVENT_ITEM_LOAD_COMPLETE : "ITEM_LOAD_COMPLETE",
-	EVENT_LOAD_ERROR : "LOAD_ERROR"
+	EVENT_ALL_LOAD_TIMEOUT : "ALL_LOAD_TIMEOUT",
+	_EVENT_ITEM_LOAD_COMPLETE : "ITEM_LOAD_COMPLETE",
+	_EVENT_LOAD_ERROR : "LOAD_ERROR"
 }
 
 class ZkProxy
-	# event
 	util.inherits(@, Event.EventEmitter)
-	@.on(@EVENT_ALL_LOAD_COMPLETE, ()->	@_loadCompleted = true)
-	@.on(@EVENT_ITEM_LOAD_COMPLETE, (name, data)->
+	@.on(@_EVENT_ITEM_LOAD_COMPLETE, (name, data)->
 		if data?
 	        RemoteConfigCache[name] = data
 	    else
 			delete RemoteConfigCache[name]
 	)
-	@.on(@EVENT_LOAD_ERROR,(err)-> console.log("LOAD ERROR:#{err.stack}"))
+	@.on(@_EVENT_LOAD_ERROR,(err)-> console.log("LOAD ERROR:#{err.stack}"))
 
 	constructor : ()->
 		throw new Error("init error: project is null or hostList is null") if not zkConfig.project?
+		@_loadCompleted = false
 		@_PROJECT_PATH = CONFIG_ROOT_PATH + "/" +zkConfig.project
 		@_hostList = zkConfig.hostList
 		@_retries = zkConfig.retries || 3
@@ -39,10 +39,11 @@ class ZkProxy
 
 	##check if load completed
 	checkLoadState : ()->
-		@_loadCompleted && true
+		@_loadCompleted
 
 	load : ()->
 		@_loadCompleted = false
+		@_setLoadTimeoutCheck()
 		@_client.connect()
 		@_client.getChildren(@_PROJECT_PATH, @_initConfigMap.bind(@))
 
@@ -50,9 +51,12 @@ class ZkProxy
 		# clear up
 		RemoteConfigCache = {}
 		if err
-			@emit(@EVENT_LOAD_ERROR, err)
+			@emit(@_EVENT_LOAD_ERROR, err)
 		if children?
-			_countDownLatch = new CountDownLatch(children.length, ()->@emit(@EVENT_ALL_LOAD_COMPLETE))
+			_countDownLatch = new CountDownLatch(children.length,
+				()->
+					@_loadCompleted = true; @emit(@EVENT_ALL_LOAD_COMPLETE)
+			)
 			for child in children
 				@_loadConfigItem(child, _countDownLatch)
 
@@ -60,9 +64,9 @@ class ZkProxy
 		_path = @_buildPath(name)
 		@_client.getData(_path, null, (err, data, stat)->
 			if err
-				@emit(@EVENT_LOAD_ERROR, err)
+				@emit(@_EVENT_LOAD_ERROR, err)
 			else
-				@emit(@EVENT_ITEM_LOAD_COMPLETE, name, data)
+				@emit(@_EVENT_ITEM_LOAD_COMPLETE, name, data)
 			_countDownLatch.countDown()
 			return
 		)
@@ -71,6 +75,15 @@ class ZkProxy
 	# build zookeeper node full path by config name
 	_buildPath : (configName)->
 		@_PROJECT_PATH + "/" + configName
+
+	_setLoadTimeoutCheck : ()->
+		setTimeout(
+			()->
+				if not @_loadCompleted
+					@emit(@_EVENT_LOAD_ERROR, new Error("load all configs timeout , except finished in #{@_loadTimeout}"))
+					@emit(@EVENT_ALL_LOAD_TIMEOUT)
+			, @_loadTimeout
+		)
 
 class CountDownLatch
 	# count: task count

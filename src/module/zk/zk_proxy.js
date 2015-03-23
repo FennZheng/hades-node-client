@@ -12,19 +12,16 @@
 
   this._event = {
     EVENT_ALL_LOAD_COMPLETE: "ALL_LOAD_COMPLETE",
-    EVENT_ITEM_LOAD_COMPLETE: "ITEM_LOAD_COMPLETE",
-    EVENT_LOAD_ERROR: "LOAD_ERROR"
+    EVENT_ALL_LOAD_TIMEOUT: "ALL_LOAD_TIMEOUT",
+    _EVENT_ITEM_LOAD_COMPLETE: "ITEM_LOAD_COMPLETE",
+    _EVENT_LOAD_ERROR: "LOAD_ERROR"
   };
 
   ZkProxy = (function() {
 
     util.inherits(ZkProxy, Event.EventEmitter);
 
-    ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_COMPLETE, function() {
-      return this._loadCompleted = true;
-    });
-
-    ZkProxy.on(ZkProxy.EVENT_ITEM_LOAD_COMPLETE, function(name, data) {
+    ZkProxy.on(ZkProxy._EVENT_ITEM_LOAD_COMPLETE, function(name, data) {
       if (data != null) {
         RemoteConfigCache[name] = data;
       } else {
@@ -33,7 +30,7 @@
       return delete RemoteConfigCache[name];
     });
 
-    ZkProxy.on(ZkProxy.EVENT_LOAD_ERROR, function(err) {
+    ZkProxy.on(ZkProxy._EVENT_LOAD_ERROR, function(err) {
       return console.log("LOAD ERROR:" + err.stack);
     });
 
@@ -41,6 +38,7 @@
       if (!(zkConfig.project != null)) {
         throw new Error("init error: project is null or hostList is null");
       }
+      this._loadCompleted = false;
       this._PROJECT_PATH = CONFIG_ROOT_PATH + "/" + zkConfig.project;
       this._hostList = zkConfig.hostList;
       this._retries = zkConfig.retries || 3;
@@ -54,11 +52,12 @@
     }
 
     ZkProxy.prototype.checkLoadState = function() {
-      return this._loadCompleted && true;
+      return this._loadCompleted;
     };
 
     ZkProxy.prototype.load = function() {
       this._loadCompleted = false;
+      this._setLoadTimeoutCheck();
       this._client.connect();
       return this._client.getChildren(this._PROJECT_PATH, this._initConfigMap.bind(this));
     };
@@ -67,10 +66,11 @@
       var child, _countDownLatch, _i, _len, _results;
       RemoteConfigCache = {};
       if (err) {
-        this.emit(this.EVENT_LOAD_ERROR, err);
+        this.emit(this._EVENT_LOAD_ERROR, err);
       }
       if (children != null) {
         _countDownLatch = new CountDownLatch(children.length, function() {
+          this._loadCompleted = true;
           return this.emit(this.EVENT_ALL_LOAD_COMPLETE);
         });
         _results = [];
@@ -87,9 +87,9 @@
       _path = this._buildPath(name);
       this._client.getData(_path, null, function(err, data, stat) {
         if (err) {
-          this.emit(this.EVENT_LOAD_ERROR, err);
+          this.emit(this._EVENT_LOAD_ERROR, err);
         } else {
-          this.emit(this.EVENT_ITEM_LOAD_COMPLETE, name, data);
+          this.emit(this._EVENT_ITEM_LOAD_COMPLETE, name, data);
         }
         _countDownLatch.countDown();
       });
@@ -97,6 +97,15 @@
 
     ZkProxy.prototype._buildPath = function(configName) {
       return this._PROJECT_PATH + "/" + configName;
+    };
+
+    ZkProxy.prototype._setLoadTimeoutCheck = function() {
+      return setTimeout(function() {
+        if (!this._loadCompleted) {
+          this.emit(this._EVENT_LOAD_ERROR, new Error("load all configs timeout , except finished in " + this._loadTimeout));
+          return this.emit(this.EVENT_ALL_LOAD_TIMEOUT);
+        }
+      }, this._loadTimeout);
     };
 
     return ZkProxy;

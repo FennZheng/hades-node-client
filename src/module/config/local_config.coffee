@@ -23,5 +23,4 @@ class LocalConfig extends Module
 	getDynamic : (name)->
 		@get(name)
 
-_instance = new LocalConfig()
-exports.LocalConfig = _instance
+exports.LocalConfig = new LocalConfig()
