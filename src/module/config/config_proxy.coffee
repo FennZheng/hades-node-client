@@ -1,5 +1,5 @@
 Module = require('../../lib/module').Module
-IConfig = require('./I_config').IConfig
+IConfig = require('./i_config').IConfig
 LocalConfig = require('./local_config').LocalConfig
 RemoteConfig = require('./remote_config').RemoteConfig
 

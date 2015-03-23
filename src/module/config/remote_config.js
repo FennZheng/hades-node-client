@@ -6,7 +6,7 @@
 
   Module = require('../../lib/module').Module;
 
-  IConfig = require('./I_config').IConfig;
+  IConfig = require('./i_config').IConfig;
 
   ZkProxy = require('../zk/zk_proxy').ZkProxy;
 
