@@ -1,0 +1,3 @@
+RemoteConfigCache = {}
+
+exports.RemoteConfigCache = RemoteConfigCache

@@ -1,10 +1,14 @@
 zookeeper = require('node-zookeeper-client')
 zkConfig = require('../../setting/config.json')
-ConfigMap = require('./RemoteConfigStore').ConfigMap
+RemoteConfigCache = require('../config/RemoteConfigCache').RemoteConfigCache
+Fiber = require('fibers')
 
 CONFIG_ROOT_PATH = "/hades/configs"
-#TODO 要处理sessionTimeout
+#TODO 要处理sessionTimeout和connect断开等
+
 class ZkProxy
+	@_loadCompleted = false
+
 	constructor : ()->
 		throw new Error("hades-node-client init error: project is null in config.json") if not zkConfig.project?
 		@_PROJECT_PATH = CONFIG_ROOT_PATH + "/" +zkConfig.project
@@ -15,88 +19,42 @@ class ZkProxy
 			retries: @_retries ,
 			sessionTimeout: @_sessionTimeout
 		})
+		return
+
+	#util.inherits(ZkProxy, Event.EventEmitter)
+
+	##检查是否加载完成
+	checkLoadState : ()->
+		@_loadCompleted && true
+
+	load : ()->
+		@_loadCompleted = false
 		@_client.connect()
-		return
+		@_client.getChildren(@_PROJECT_PATH, @_initConfigMap.bind(@))
 
-	_setConfig : (name, data)->
+	_initConfigMap : (err, children, stats)->
+		if err
+			console.log("_initConfigMap error: #{err.stack}")
+		if children?
+			# fire event when load  complete
+			_countDownLatch = new CountDownLatch(children.length, ()-> @_loadCompleted = true)
+			for child in children
+				@_loadConfigItem(child, _countDownLatch)
+
+	_loadConfigItem : (name, _countDownLatch)->
 		_path = @_buildPath(name)
-		if not @_exist(_path)
-			@_createPath(_path)
-		@_set(_path, data)
-		return
-
-	loadConfig : (name)->
-		_path = @_buildPath(name)
-		console.log("loadConfig name:#{name} ,path:#{_path}")
-
 		@_client.getData(_path, null, (error, data, stat)->
 			if error
 				console.log(error.stack)
 			else
 				if data?
-					ConfigMap[name] = data.toString("utf-8")
+					RemoteConfigCache[name] = data.toString("utf-8")
 				else
-					delete ConfigMap[name]
+					RemoteConfigCache[name] = null
+			_countDownLatch.countDown()
+			return
 		)
-
-	loadConfigAndWatch : (name)->
-		_path = @_buildPath(name)
-		console.log("loadConfigAndWatch name:#{name} ,path:#{_path}")
-		@_client.getData(
-		  _path,
-		(event)->
-			console.log("receive event:"+zookeeper.Event.NODE_DATA_CHANGED)
-			switch event.getType
-				when zookeeper.Event.NODE_DATA_CHANGED then @loadConfigAndWatch(name)
-				else
-					console.log("path #{event.getPath()} changed: #{event.getType()}")
-		,(error, data, stat)->
-			if error
-				console.log(error.stack)
-			else
-				if data?
-					ConfigMap[name] = data.toString("utf-8")
-				else
-					delete ConfigMap[name]
-		)
-
-	_getDataAndNotify : (path, cb)->
-		_name = @_getConfigName(path)
-		@_client.getData(
-		  path
-		,(err, data, stat)->
-			if error
-				console.log("get data error when data changed :"+err.stack)
-			else
-				if data?
-					cb(_name, data.toString("utf-8"))
-				else
-					cb(_name, null)
-		)
-
-	_createPath : (path)->
-		@_client.create(path, (error)->
-			if error
-				console.log('Failed to create node: %s due to: %s.', path, error)
-			console.log('Node: %s is successfully created.', path)
-		)
-
-	_set : (path, data)->
-		@_client.setData(path, null, -1,  (error, stat)->
-			if error
-				console.log(error.stack)
-			console.log('Data is set at path :%s', path)
-		)
-
-	# return false if error
-	_exist : (path)->
-		@_client.exists(path, (error, stat)->
-			if error
-				console.log(error.stack)
-			if stat
-				return true
-			return false
-		)
+		return
 
 	_buildPath : (configName)->
 		@_PROJECT_PATH + "/" + @_buildKey(configName)
@@ -107,10 +65,20 @@ class ZkProxy
 			_zkKey = name.slice(0,-5)
 		_zkKey
 
-	_getConfigName : (path)->
-		path.replace(@_PROJECT_PATH+"/", "")
-
-
 instance = new ZkProxy()
+
+
+class CountDownLatch
+	# count: task count
+	# submit: call submit() when task finished
+	constructor : (count, submit)->
+		@_count = count
+		@_submit = submit
+
+	countDown : ()->
+		@_count = @_count -1
+		if @_count <= 0
+			@_submit()
+		@_count
 
 exports.ZkProxy = instance

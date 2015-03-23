@@ -9,4 +9,5 @@ updateData = (data)->
 			console.log("set data error:"+err.stack)
 	)
 updateData(33333)
+
 exports.updateData = updateData
