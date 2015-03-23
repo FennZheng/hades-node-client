@@ -6,7 +6,7 @@
 
   TEST_DATA_PATH = "/Users/vernonzheng/Project/github/hades-node-client/test/";
 
-  LocalConfig = require("../src/module/config/LocalConfig").LocalConfig;
+  LocalConfig = require("../src/module/config/local_config").LocalConfig;
 
   describe('test local config', function() {
     var config;

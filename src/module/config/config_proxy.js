@@ -4,13 +4,13 @@
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  Module = require('../../lib/Module').Module;
+  Module = require('../../lib/module').Module;
 
-  IConfig = require('./IConfig').IConfig;
+  IConfig = require('./I_config').IConfig;
 
-  LocalConfig = require('./LocalConfig').LocalConfig;
+  LocalConfig = require('./local_config').LocalConfig;
 
-  RemoteConfig = require('./RemoteConfig').RemoteConfig;
+  RemoteConfig = require('./remote_config').RemoteConfig;
 
   ConfigProxy = (function(_super) {
 

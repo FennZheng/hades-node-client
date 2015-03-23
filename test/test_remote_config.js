@@ -4,9 +4,9 @@
 
   require("should");
 
-  zkHelp = require("./ZkHelp");
+  zkHelp = require("./zk_help");
 
-  RemoteConfig = require("../src/module/config/RemoteConfig").RemoteConfig;
+  RemoteConfig = require("../src/module/config/remote_config").RemoteConfig;
 
   HOST = "127.0.0.1:2181";
 

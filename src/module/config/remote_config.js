@@ -4,13 +4,13 @@
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  Module = require('../../lib/Module').Module;
+  Module = require('../../lib/module').Module;
 
-  IConfig = require('./IConfig').IConfig;
+  IConfig = require('./I_config').IConfig;
 
-  ZkProxy = require('../zk/ZkProxy').ZkProxy;
+  ZkProxy = require('../zk/zk_proxy').ZkProxy;
 
-  RemoteConfigCache = require('./RemoteConfigCache').RemoteConfigCache;
+  RemoteConfigCache = require('./remote_config_cache').RemoteConfigCache;
 
   RemoteConfig = (function(_super) {
 
@@ -19,27 +19,30 @@
     RemoteConfig.include(IConfig);
 
     function RemoteConfig() {
-      ZkProxy.onLoadComplete(function() {});
+      ZkProxy.on("event");
       ZkProxy.load();
-      setInterval(function() {
-        if (ZkProxy.checkLoadState()) {
-
-        }
-      }, 1000);
     }
 
     RemoteConfig.prototype.get = function(name) {
       if (!(name != null) || (name.length >= 5 && name.slice(-5, -1) === ".json")) {
         throw new Error("config can not end with .json");
       }
-      return ConfigMap[name];
+      if (ZkProxy.checkLoadState()) {
+        return RemoteConfigCache[name];
+      } else {
+
+      }
     };
 
     RemoteConfig.prototype.getDynamic = function(name) {
       if (!(name != null) || (name.length >= 5 && name.slice(-5, -1) === ".json")) {
         throw new Error("config can not end with .json");
       }
-      return ConfigMap[name];
+      if (ZkProxy.checkLoadState()) {
+        return RemoteConfigCache[name];
+      } else {
+
+      }
     };
 
     return RemoteConfig;

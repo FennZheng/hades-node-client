@@ -1,7 +1,7 @@
-Module = require('../../lib/Module').Module
-IConfig = require('./IConfig').IConfig
-LocalConfig = require('./LocalConfig').LocalConfig
-RemoteConfig = require('./RemoteConfig').RemoteConfig
+Module = require('../../lib/module').Module
+IConfig = require('./I_config').IConfig
+LocalConfig = require('./local_config').LocalConfig
+RemoteConfig = require('./remote_config').RemoteConfig
 
 class ConfigProxy extends Module
 	get : (name)->

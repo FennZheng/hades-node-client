@@ -1,5 +1,5 @@
-Module = require('../../lib/Module').Module
-IConfig = require('./IConfig').IConfig
+Module = require('../../lib/module').Module
+IConfig = require('./I_config').IConfig
 ## store
 ConfigMap = {}
 

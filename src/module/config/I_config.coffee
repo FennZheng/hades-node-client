@@ -1,5 +1,5 @@
-Module = require("../../lib/Module")
-class IConfig extends Module
+Module = require("../../lib/module")
+class IConfig extends module
 
 	get : (name)->
 
