@@ -12,5 +12,6 @@ getConfig = ()->
 	console.log(" #{i} ---"+RemoteConfig.getDynamic(TEST_NODE))
 
 
-#setInterval(getConfig,1000)
-getConfig()
+setInterval(getConfig,1000)
+#getConfig()
+

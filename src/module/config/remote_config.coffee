@@ -11,8 +11,8 @@ class RemoteConfig extends Module
 
 	constructor : ()->
 		ZkProxy.load()
-		ZkProxy.on(@EVENT_ALL_LOAD_COMPLETE,()->@_inited = true)
-		ZkProxy.on(@EVENT_ALL_LOAD_TIMEOUT,()->@_inited = false;process.exit(-1))
+		ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_COMPLETE,()->@_inited = true)
+		ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_TIMEOUT,()->@_inited = false;process.exit(-1))
 
 	# @Override
 	get : (name)->
