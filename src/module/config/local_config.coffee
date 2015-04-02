@@ -1,5 +1,5 @@
 Module = require('../../lib/module').Module
-IConfig = require('./i_config').IConfig
+IConfig = require('./iconfig').IConfig
 ## store
 ConfigMap = {}
 
@@ -20,7 +20,7 @@ class LocalConfig extends Module
 		ConfigMap[name]
 
 	# @Override
-	getDynamic : (name)->
+	getDynamic : (name, watcher)->
 		@get(name)
 
 exports.LocalConfig = new LocalConfig()

@@ -1,5 +1,5 @@
 Module = require('../../lib/module').Module
-IConfig = require('./i_config').IConfig
+IConfig = require('./iconfig').IConfig
 ZkProxy = require('../zk/zk_proxy').ZkProxy
 RemoteConfigCache = require('./remote_config_cache').RemoteConfigCache
 
@@ -28,7 +28,7 @@ class RemoteConfig extends Module
 
 
 	# @Override
-	getDynamic : (name)->
+	getDynamic : (name, watcher)->
 		throw new Error("config can not end with .json") if not name? || (name.length >= 5 and name.slice(-5, -1) == ".json")
 		if(@_inited)
 			return RemoteConfigCache[name]
