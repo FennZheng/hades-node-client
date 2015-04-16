@@ -2,28 +2,28 @@ zookeeper = require('node-zookeeper-client')
 zkConfig = require('../../setting/hades_config.json')
 RemoteConfigCache = require('../config/remote_config_cache').RemoteConfigCache
 util = require('util')
-Events = require('events')
+EventEmitter = require('events').EventEmitter
 
 CONFIG_ROOT_PATH = "/hades/configs"
+DEBUG = true
 
 #TODO deal with sessionTimeout and connection closed event
-# event started with _ is inner event
 EVENT = {
 	EVENT_ALL_LOAD_COMPLETE : "LOAD_COMPLETE",
 	EVENT_ALL_LOAD_TIMEOUT : "LOAD_TIMEOUT"
 }
 
 LOAD_STATE = {
+	NO_LOADING : "0",
 	LOADING : "1",
-	LOAD_COMPLETE : "2",
-	LOAD_TIMEOUT : "-1"
+	LOAD_COMPLETE : "2"
 }
 
-class ZkProxy
+class ZkProxy extends EventEmitter
 
-	constructor : ()->
+	constructor : ->
 		throw new Error("init error: project is null or hostList is null") if not zkConfig.project?
-		@_loadState= false
+		@_loadState= LOAD_STATE.NO_LOADING
 		@_PROJECT_PATH = CONFIG_ROOT_PATH + "/" +zkConfig.project
 		@_hostList = zkConfig.hostList
 		@_retries = zkConfig.retries || 3
@@ -35,105 +35,70 @@ class ZkProxy
 		})
 		return
 
-	util.inherits(@, Events.EventEmitter)
-
 	##check if load completed
-	checkLoadState : ()->
+	checkLoadState : ->
 		@_loadState
 
-	load : ()->
-		throw new Error("ZkProxy load duplicate invoke!!") if @checkLoadState() == LOAD_STATE.LOAD_COMPLETE
-		@_loadCompleted = false
+	load : ->
+		throw new Error("ZkProxy load duplicate invoke!!") if @checkLoadState() != LOAD_STATE.NO_LOADING
+		@_loadState = LOAD_STATE.LOADING
 		@_client.connect()
-		@_client.getChildren(@_PROJECT_PATH, @_initConfigMap.bind(@))
+		@_client.getChildren(@_PROJECT_PATH, @_initConfigMap)
 
-	_initConfigMap : (err, children, stats)->
-		# clear up
-		RemoteConfigCache = {}
+	_initConfigMap : (err, children, stats)=>
+		# global cache ,clear it up
+		RemoteConfigCache.init()
 		if err
 			@_errorLogMsg(err.stack)
 		if children?
-			_taskCompleteQueue = new TaskCompleteQueue(children, ()->@_loadComplete())
-			new TaskTimeoutCheck(_taskCompleteQueue).run(@_loadAllComplete)
+			_taskCount = children.length
+			_loadTimerId = @_setLoadTimeout()
 			for child in children
-				@_loadConfigItem(child, _taskCompleteQueue)
+				@_fillConfigItem(child, _taskCount, _loadTimerId)
 
-	_loadConfigItem : (name, _taskCompleteQueue)->
-		_path = @_buildPath(name)
-		@_client.getData(_path, null, (err, data, stat)->
-			if err
-				@_errorLogMsg("_loadConfigItem name: #{name} error: #{err.stack}")
-			else
-				@_loadItemComplete(name, data)
-			_taskCompleteQueue.complete(name)
-			return
-		)
 		return
 
-	_loadItemComplete : (name, data)->
-		if data?
-			RemoteConfigCache[name] = data
-		else
-			delete RemoteConfigCache[name]
+	_fillConfigItem : (child, _taskCount, _loadTimerId)->
+		_path = @_buildPath(child)
+		@_client.getData(_path, null, (err, data, stat)=>
+			if err
+				console.log("err:"+err.stack)
+			else
+				RemoteConfigCache.set(child, new String(data, "utf-8"))
+				if --_taskCount <= 0
+					@_loadState = LOAD_STATE.LOAD_COMPLETE
+					@.emit(EVENT.EVENT_ALL_LOAD_COMPLETE)
+					clearTimeout(_loadTimerId)
+			return
+		)
 
-	_loadAllComplete : ()->
-		@_loadCompleted = true
-		@.emit(EVENT.EVENT_ALL_LOAD_COMPLETE)
-
-	_loadAllTimeout : (err)->
-		@_errorLogMsg(err.stack)
-		@.emit(EVENT.EVENT_ALL_LOAD_TIMEOUT)
+	_setLoadTimeout : ->
+		setTimeout(->
+			if @checkLoadState() != LOAD_STATE.LOAD_COMPLETE
+				@.emit(EVENT.EVENT_ALL_LOAD_TIMEOUT)
+				console.error("load all config from zk timeout(#{@_loadTimeout}ms)")
+		,@_loadTimeout)
 
 	_errorLogMsg : (msg)->
 		console.log(msg)
+
+	_debugLog : (msg)->
+		console.log(msg) if DEBUG
 
 	# build zookeeper node full path by config name
 	_buildPath : (configName)->
 		@_PROJECT_PATH + "/" + configName
 
-
-class TaskTimeoutCheck
-	_taskCompleteQueue = null
-	constructor : (taskCompleteQueue)->
-		_taskCompleteQueue = taskCompleteQueue
-	run : (cb)->
-		#nodejs 里setTimeout有更好的替代方案吗？
-		setTimeout(
-			()->
-				if not @_loadCompleted
-					_errorMsg = "load all configs timeout , except finished in #{@_loadTimeout} ,
-								see unfinished tasks as follows:"
-					_errorMsg += _taskCompleteQueue.getInComplete().join(",")
-					cb(new Error(_errorMsg))
-		, @_loadTimeout
-		)
-		return
-
-class TaskCompleteQueue
-	# tasks: task name array
-	# submit: call submit() when task finished
-	constructor : (tasks, submit)->
-		@_count = tasks.length
-		@_tasks = tasks
-		@_submit = submit
-
-	complete : (task)->
-		@_count = @_count -1
-		@_tasks.remove(task)
-		if @_count <= 0
-			@_submit()
-		@_count
-
-	getInComplete : ()->
-		@_tasks
+	register : ()->
 
 
 # export singleton
 exports.ZkProxy = new ZkProxy()
-# export event enum
-for event in EVENT
-	exports[event.key] = event.value
 
 # export stat enum
 for state in LOAD_STATE
 	exports[state.key] = state.value
+
+# export event enum
+for event in EVENT
+	exports[event.key] = event.value
