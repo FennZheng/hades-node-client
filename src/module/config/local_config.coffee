@@ -21,7 +21,6 @@ class LocalConfig extends EventEmitter
 
 	# @Override name:xx/xx.json
 	get : (name)->
-		throw new Error("config can not end with .json") if name.slice(-5,-1) == ".json"
 		_val = ConfigMap[name]
 		return null if not _val
 		return _val

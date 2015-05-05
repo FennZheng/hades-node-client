@@ -17,13 +17,11 @@ class RemoteConfig extends EventEmitter
 
 	# @Override
 	get : (name)->
-		throw new Error("config can not end with .json") if not name? || (name.length >= 5 and name.slice(-5, -1) == ".json")
-		return RemoteConfigCache.get name
+		RemoteConfigCache.get name
 
 
 	# @Override
 	getDynamic : (name, watcher)->
-		throw new Error("config can not end with .json") if not name? || (name.length >= 5 and name.slice(-5, -1) == ".json")
 		if(@_inited)
 			_val = RemoteConfigCache.get name
 			ZkProxy.regConfWatcher(name)
