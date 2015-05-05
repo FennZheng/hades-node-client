@@ -1,40 +1,47 @@
-Module = require('../../lib/module').Module
-IConfig = require('./iconfig').IConfig
 fs = require('fs')
 path = require('path')
+EventEmitter = require('events').EventEmitter
 
 ## store
 ConfigMap = {}
-# NO_EXISTS flag
-CONFIG_FILE_NO_EXISTS = "NO_EXISTS"
+LOCAL_CONFIG_READY = "LOCAL_CONFIG_READY"
 
-class LocalConfig extends Module
-	@include IConfig
+class LocalConfig extends EventEmitter
 	## local config path
-	CONFIG_PATH = "../../setting/"
+	constructor : ->
+		@_configPath = "/Users/vernonzheng/Project/github/hades-node-client/src/setting"
 
-	constructor : (path)->
-		if path?
-			CONFIG_PATH = path
+	init : (configRoot)->
+		if configRoot?
+			@_configPath = configRoot
+		else
+			console.error("LocalConfig configRoot is null!!!")
+		@_loadDir(path.normalize(@_configPath))
+		@.emit(_instance.LOCAL_CONFIG_READY)
 
 	# @Override name:xx/xx.json
 	get : (name)->
 		throw new Error("config can not end with .json") if name.slice(-5,-1) == ".json"
-		if not ConfigMap[name]?
-			if fs.existsSync(path)
-				ConfigMap[name] = require(@_buildPath(name))
-			else
-				ConfigMap[name] = CONFIG_FILE_NO_EXISTS
 		_val = ConfigMap[name]
-		if _val == CONFIG_FILE_NO_EXISTS
-			_val = null
-		_val
+		return null if not _val
+		return _val
 
 	# @Override
 	getDynamic : (name, watcher)->
 		@get(name)
 
-	_buildPath : (name)->
-		path.normalize(CONFIG_PATH + name + ".json")
+	# 同步递归 读取配置
+	_loadDir : (f)->
+		_files = fs.readdirSync(f)
+		for _item of _files
+			_fName = path.join(f, _files[_item])
+			_fStat = fs.lstatSync(_fName)
+			if _fStat.isDirectory()
+				@_loadDir(_fName)
+			else if path.extname(_fName) == ".json"
+				ConfigMap[path.basename(_fName, ".json")] = require(_fName)
+		return
 
-exports.LocalConfig = new LocalConfig()
+_instance = new LocalConfig()
+exports.LocalConfig = _instance
+exports.LOCAL_CONFIG_READY = LOCAL_CONFIG_READY

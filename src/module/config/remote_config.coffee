@@ -1,42 +1,36 @@
-Module = require('../../lib/module').Module
-IConfig = require('./iconfig').IConfig
 ZkProxy = require('../zk/zk_proxy').ZkProxy
 RemoteConfigCache = require('./remote_config_cache').RemoteConfigCache
+EventEmitter = require('events').EventEmitter
 
-class RemoteConfig extends Module
-	@include IConfig
+REMOTE_CONFIG_READY = "REMOTE_CONFIG_READY"
+
+class RemoteConfig extends EventEmitter
 
 	@_inited = false
-	@_checkInitInterval = 100
+	@_checkInitInterval = 10000
 
-	constructor : ()->
+	init : ->
+		self = @
+		ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_COMPLETE, ->@_inited = true; self.emit(_instance.REMOTE_CONFIG_READY))
+		ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_TIMEOUT, ->@_inited = false; process.exit(-1))
 		ZkProxy.load()
-		ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_COMPLETE,()->@_inited = true)
-		ZkProxy.on(ZkProxy.EVENT_ALL_LOAD_TIMEOUT,()->@_inited = false;process.exit(-1))
 
 	# @Override
 	get : (name)->
 		throw new Error("config can not end with .json") if not name? || (name.length >= 5 and name.slice(-5, -1) == ".json")
-		if(@_inited)
-			return RemoteConfigCache[name]
-		else
-			setInterval(()->
-				if(@_inited)
-					clearInterval(self)
-			, @_checkInitInterval)
-			return RemoteConfigCache[name]
+		return RemoteConfigCache.get name
 
 
 	# @Override
 	getDynamic : (name, watcher)->
 		throw new Error("config can not end with .json") if not name? || (name.length >= 5 and name.slice(-5, -1) == ".json")
 		if(@_inited)
-			return RemoteConfigCache[name]
+			_val = RemoteConfigCache.get name
+			ZkProxy.regConfWatcher(name)
+			return _val
 		else
-			setInterval(()->
-				if(@_inited)
-					clearInterval(self)
-			, @_checkInitInterval)
-			return RemoteConfigCache[name]
+			return null
 
-exports.RemoteConfig = new RemoteConfig()
+_instance = new RemoteConfig()
+exports.RemoteConfig = _instance
+exports.REMOTE_CONFIG_READY = REMOTE_CONFIG_READY

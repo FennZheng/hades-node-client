@@ -5,13 +5,17 @@ util = require('util')
 EventEmitter = require('events').EventEmitter
 
 CONFIG_ROOT_PATH = "/hades/configs"
+SERVICE_ROOT_PATH = "hades/services"
+DEFAULT_GROUP = "main"
+LOCAL_IP = require("../util/ip_util").LOCAL_IP
+
 DEBUG = true
 
 #TODO deal with sessionTimeout and connection closed event
-EVENT = {
-	EVENT_ALL_LOAD_COMPLETE : "LOAD_COMPLETE",
-	EVENT_ALL_LOAD_TIMEOUT : "LOAD_TIMEOUT"
-}
+EVENT_ALL_LOAD_COMPLETE = "LOAD_COMPLETE"
+EVENT_ALL_LOAD_TIMEOUT = "LOAD_TIMEOUT"
+
+CONFIG_VERSION_CONTROL = "_versionControl"
 
 LOAD_STATE = {
 	NO_LOADING : "0",
@@ -33,16 +37,16 @@ class ZkProxy extends EventEmitter
 			retries: @_retries ,
 			sessionTimeout: @_sessionTimeout
 		})
+		@_maxUpdateInterval = zkConfig.MaxUpdateInterval || 60000
+		@_client.connect()
 		return
 
-	##check if load completed
 	checkLoadState : ->
 		@_loadState
 
 	load : ->
 		throw new Error("ZkProxy load duplicate invoke!!") if @checkLoadState() != LOAD_STATE.NO_LOADING
 		@_loadState = LOAD_STATE.LOADING
-		@_client.connect()
 		@_client.getChildren(@_PROJECT_PATH, @_initConfigMap)
 
 	_initConfigMap : (err, children, stats)=>
@@ -53,29 +57,34 @@ class ZkProxy extends EventEmitter
 		if children?
 			_taskCount = children.length
 			_loadTimerId = @_setLoadTimeout()
+			_task = {
+				count : _taskCount,
+				timer : _loadTimerId
+			}
 			for child in children
-				@_fillConfigItem(child, _taskCount, _loadTimerId)
+				@_fillConfigItem(child, _task)
 
 		return
 
-	_fillConfigItem : (child, _taskCount, _loadTimerId)->
+	_fillConfigItem : (child, _task)->
 		_path = @_buildPath(child)
 		@_client.getData(_path, null, (err, data, stat)=>
+			@_debugLog("_taskCount:#{_task.count}   get data!!!!")
 			if err
 				console.log("err:"+err.stack)
 			else
 				RemoteConfigCache.set(child, new String(data, "utf-8"))
-				if --_taskCount <= 0
+				if --_task.count <= 0
 					@_loadState = LOAD_STATE.LOAD_COMPLETE
-					@.emit(EVENT.EVENT_ALL_LOAD_COMPLETE)
-					clearTimeout(_loadTimerId)
+					@.emit(_instance.EVENT_ALL_LOAD_COMPLETE)
+					clearTimeout(_task.timer)
 			return
 		)
 
-	_setLoadTimeout : ->
-		setTimeout(->
+	_setLoadTimeout : =>
+		setTimeout(=>
 			if @checkLoadState() != LOAD_STATE.LOAD_COMPLETE
-				@.emit(EVENT.EVENT_ALL_LOAD_TIMEOUT)
+				@.emit(_instance.EVENT_ALL_LOAD_TIMEOUT)
 				console.error("load all config from zk timeout(#{@_loadTimeout}ms)")
 		,@_loadTimeout)
 
@@ -89,16 +98,70 @@ class ZkProxy extends EventEmitter
 	_buildPath : (configName)->
 		@_PROJECT_PATH + "/" + configName
 
-	register : ()->
+	registerService : (serviceId, meta)->
+		_path = @_buildServicePath(serviceId)
+		@_client.setData(_path, meta, -1, (error, stat)->
+			if error
+				console.error("registerService setData error:"+error.stack)
+			console.log("Data is set")
+			return
+		)
 
+	_buildServicePath : (serviceId)->
+		SERVICE_ROOT_PATH + "/" + DEFAULT_GROUP + "/" + serviceId
 
+	# auto-register, because zk-watcher event only notice once
+	regConfWatcher : (name)->
+		_path = @_buildPath(name)
+		@_client.getData(_path,
+			(event)->
+				console.log("event:#{event}")
+			(err, data, stat)=>
+				@_debugLog("regConfWatcher:#{name} get data!!!!")
+				if err
+					console.log("err:"+err.stack)
+				else
+					RemoteConfigCache.set(name, new String(data, "utf-8"))
+					@regConfWatcher(name)
+				return
+		)
+
+	setCheckUpdateLoop : ->
+		setInterval(
+			=>
+				@_client.getData(ZkProxy.KEY_VERSION_CONTROL, null, (err, data, stat)=>
+					@_debugLog("_checkLastModifyTime:#{name} get data!!!!")
+					if err
+						console.log("err:"+err.stack)
+					else
+						RemoteConfigCache.set(name, new String(data, "utf-8"))
+					return
+				)
+			,@_maxUpdateInterval
+		)
+
+	updateConfig : (name)->
+		_path = @_buildPath(name)
+		@_client.getData(_path,
+		    (event)->
+				console.log("event:#{event}")
+			(err, data, stat)=>
+				@_debugLog("regConfWatcher:#{name} get data!!!!")
+				if err
+					console.log("err:"+err.stack)
+				else
+					RemoteConfigCache.set(name, new String(data, "utf-8"))
+					@regConfWatcher(name)
+				return
+		)
+
+_instance = new ZkProxy()
 # export singleton
-exports.ZkProxy = new ZkProxy()
+exports.ZkProxy = _instance
 
 # export stat enum
 for state in LOAD_STATE
 	exports[state.key] = state.value
 
-# export event enum
-for event in EVENT
-	exports[event.key] = event.value
+exports.EVENT_ALL_LOAD_COMPLETE = EVENT_ALL_LOAD_COMPLETE
+exports.EVENT_ALL_LOAD_TIMEOUT = EVENT_ALL_LOAD_TIMEOUT
