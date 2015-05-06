@@ -1,23 +1,25 @@
 fs = require('fs')
 path = require('path')
 EventEmitter = require('events').EventEmitter
+ProjectConfig = require("../project_config").ProjectConfig
+Log = require("../log/log")
 
 ## store
 ConfigMap = {}
-LOCAL_CONFIG_READY = "LOCAL_CONFIG_READY"
+EVENT_LOCAL_CONFIG_READY = "EVENT_LOCAL_CONFIG_READY"
 
 class LocalConfig extends EventEmitter
 	## local config path
 	constructor : ->
-		@_configPath = "/Users/vernonzheng/Project/github/hades-node-client/src/setting"
+		@_configPath = null
 
-	init : (configRoot)->
-		if configRoot?
-			@_configPath = configRoot
-		else
-			console.error("LocalConfig configRoot is null!!!")
+	init : ->
+		_config = ProjectConfig.getLocalConfig()
+		@_configPath = _config["confRoot"]
+		Log.error("LocalConfig configRoot is null!!!") if not @_configPath
+
 		@_loadDir(path.normalize(@_configPath))
-		@.emit(_instance.LOCAL_CONFIG_READY)
+		@.emit(_instance.EVENT_LOCAL_CONFIG_READY)
 
 	# @Override name:xx/xx.json
 	get : (name)->
@@ -43,4 +45,4 @@ class LocalConfig extends EventEmitter
 
 _instance = new LocalConfig()
 exports.LocalConfig = _instance
-exports.LOCAL_CONFIG_READY = LOCAL_CONFIG_READY
+exports.EVENT_LOCAL_CONFIG_READY = EVENT_LOCAL_CONFIG_READY

@@ -1,8 +1,11 @@
+Log = require("../log/log")
 LocalConfig = require('./local_config').LocalConfig
 RemoteConfig = require('./remote_config').RemoteConfig
 EventEmitter = require('events').EventEmitter
+ProjectConfig = require("../project_config").ProjectConfig
 
-CONFIG_READY = "CONFIG_READY"
+EVENT_CONFIG_READY = "EVENT_CONFIG_READY"
+EVENT_CONFIG_FAIL = "EVENT_CONFIG_FAIL"
 
 class ConfigBundles extends EventEmitter
 
@@ -11,26 +14,31 @@ class ConfigBundles extends EventEmitter
 		@_remoteConfigInited = false
 		@_inited = false
 
-	init : ->
+	init : (confFile)->
+		ProjectConfig.init(confFile)
 		self = @
 		#TODO zookeeper 没启动，没有报错？？？？RemoteConfig
-		RemoteConfig.on(RemoteConfig.REMOTE_CONFIG_READY,
+		RemoteConfig.on(RemoteConfig.EVENT_REMOTE_CONFIG_READY,
 			->
-				console.log("RemoteConfig receive event: REMOTE_CONFIG_READY")
+				Log.debug("RemoteConfig receive event: REMOTE_CONFIG_READY")
 				self._remoteConfigInited = true
-				console.log("RemoteConfig @_remoteConfigInited!  #{self._localConfigInited}  #{self._inited}")
 				if self._localConfigInited and not self._inited
 					self._inited = true
-					console.log("RemoteConfig emit _instance.CONFIG_READY!")
-					self.emit(_instance.CONFIG_READY)
+					Log.debug("RemoteConfig emit _instance.CONFIG_READY!")
+					self.emit(_instance.EVENT_CONFIG_READY)
 		)
-		LocalConfig.on(LocalConfig.LOCAL_CONFIG_READY,
+		RemoteConfig.on(RemoteConfig.EVENT_REMOTE_CONFIG_TIMEOUT,
+			->
+				Log.error("RemoteConfig load timeout!!")
+				self.emit(_instance.EVENT_CONFIG_FAIL)
+		)
+		LocalConfig.on(LocalConfig.EVENT_LOCAL_CONFIG_READY,
 			->
 				console.log("LocalConfig receive event: LOCAL_CONFIG_READY")
 				self._localConfigInited = true
 				if self._remoteConfigInited and not self._inited
 					self._inited = true
-					self.emit(_instance.CONFIG_READY)
+					self.emit(_instance.EVENT_CONFIG_READY)
 		)
 		LocalConfig.init()
 		RemoteConfig.init()
@@ -56,4 +64,5 @@ class ConfigBundles extends EventEmitter
 
 _instance = new ConfigBundles()
 exports.ConfigBundles = _instance
-exports.CONFIG_READY = CONFIG_READY
+exports.EVENT_CONFIG_READY = EVENT_CONFIG_READY
+exports.EVENT_CONFIG_FAIL = EVENT_CONFIG_FAIL
