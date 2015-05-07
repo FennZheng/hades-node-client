@@ -22,7 +22,7 @@ class ZkClient
 		return
 
 	setData : (path, val, cb)->
-		@_client.setData(path, val, null, (error, stat)->
+		@_client.setData(path, new Buffer(val), -1, (err, stat)->
 			return cb(err, false) if err and cb
 			return cb(null, true) if cb
 			return
@@ -30,7 +30,6 @@ class ZkClient
 
 	getData : (path, cb)->
 		@_client.getData(path, null, (err, data, stat)=>
-			Log.debug("getData:#{path}, err:#{err}, data:#{new String(data, "utf-8")}")
 			return cb(err, null) if err and cb
 			return cb(null, new String(data, "utf-8")) if cb
 			return
@@ -43,18 +42,21 @@ class ZkClient
 	setDataAutoUpdate : (path, cb)->
 		@_recursiveFetchData(path, false, cb)
 
+	#TODO Nodejs是否支持尾递归优化？？？
 	_recursiveFetchData : (path, isFetchData, cb)->
+		Log.debug("_recursiveFetchData path:#{path}, isFetchData:#{isFetchData}")
 		@_client.getData(path,
 			(event)=>
-				switch event
-					when Event.NODE_CREATED then @_recursiveFetchData(path, true, cb)
-					when Event.NODE_DATA_CHANGED then @_recursiveFetchData(path, true, cb)
+				return @_recursiveFetchData(path, false, cb) if not event
+				switch event.type
+					when ZK.Event.NODE_CREATED then @_recursiveFetchData(path, true, cb)
+					when ZK.Event.NODE_DATA_CHANGED then @_recursiveFetchData(path, true, cb)
 					else
 						@_recursiveFetchData(path, false, cb)
 				return
 			(err, data, stat)->
 				if isFetchData
-					cb(err, null) if error and cb
+					cb(err, null) if err and cb
 					cb(null, new String(data, "utf-8")) if cb
 				return
 		)

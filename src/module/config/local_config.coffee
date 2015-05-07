@@ -44,5 +44,6 @@ class LocalConfig extends EventEmitter
 		return
 
 _instance = new LocalConfig()
+_instance.EVENT_LOCAL_CONFIG_READY = EVENT_LOCAL_CONFIG_READY
+
 exports.LocalConfig = _instance
-exports.EVENT_LOCAL_CONFIG_READY = EVENT_LOCAL_CONFIG_READY

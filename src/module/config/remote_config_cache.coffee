@@ -2,7 +2,6 @@ util = require('util')
 LOCAL_IP = require("../util/ip_util").LOCAL_IP
 Log = require("../log/log")
 
-
 KEY_WHITE_IP_LIST = "_whiteIpList"
 KEY_VERSION_CONTROL = "_versionControl"
 KEY_GLOBAL_LOCK = "_globalLock"
@@ -21,20 +20,22 @@ class RemoteConfigCache
 			@_inited = true
 			@_status = {}
 
-	set : (key, value)->
-		Log.debug("remote config cache key:#{key}, value:#{value}")
+	_set : (key, value)->
 		if key in SYS_KEYS
 			@_sys[key] = value
 			return
-		return if not @isAllowUpdate()
+		if not @isAllowUpdate()
+			Log.debug("key:#{key} update is not allowed , because LocalIp:#{LOCAL_IP} is not in _whiteIpList")
+			return
 		@_cache[key] = value
 		return
 
-	setDataBytes : (key, bytes)->
-		return if not bytes
+	setDataStr : (key, str)->
+		Log.debug("setDataStr key:#{key} str:#{str}")
+		return if not str
 		try
-			_obj = JSON.parse(bytes)
-			@set(key, _obj)
+			_obj = JSON.parse(str)
+			@_set(key, _obj)
 		catch err
 			Log.error("RemoteConfigCache setData error for key :#{key}, may be JSON Object error:#{err}")
 
@@ -66,5 +67,6 @@ class RemoteConfigCache
 
 _instance = new RemoteConfigCache()
 _instance.KEY_VERSION_CONTROL = KEY_VERSION_CONTROL
+_instance.SYS_KEYS = SYS_KEYS
 
 exports.RemoteConfigCache = _instance
