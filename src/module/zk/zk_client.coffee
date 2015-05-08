@@ -42,12 +42,12 @@ class ZkClient
 	setDataAutoUpdate : (path, cb)->
 		@_recursiveFetchData(path, false, cb)
 
-	#TODO Nodejs是否支持尾递归优化？？？
 	_recursiveFetchData : (path, isFetchData, cb)->
-		Log.debug("_recursiveFetchData path:#{path}, isFetchData:#{isFetchData}")
+		#Log.debug("_recursiveFetchData path:#{path}, isFetchData:#{isFetchData}")
 		@_client.getData(path,
 			(event)=>
 				return @_recursiveFetchData(path, false, cb) if not event
+				Log.debug("receive event #{event.name} for path:#{path}")
 				switch event.type
 					when ZK.Event.NODE_CREATED then @_recursiveFetchData(path, true, cb)
 					when ZK.Event.NODE_DATA_CHANGED then @_recursiveFetchData(path, true, cb)
