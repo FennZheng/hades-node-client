@@ -1,8 +1,24 @@
 ZkClient = require("../../zk_test_util").ZkClient
 ZkClient.init()
 TEST_REMOTE_NODE = "testDynamic"
+WHITE_IP_LIST = "_whiteIpList"
+GLOBAL_LOCK = "_globalLock"
+VERSION_CONTROL = "_versionControl"
 
-setInterval(
-	()->
-		ZkClient.setData(TEST_REMOTE_NODE, "222", null)
-,1)
+updateDynamicNode = (val)->
+	ZkClient.setData(TEST_REMOTE_NODE, new Buffer(val), null)
+
+updateGlobalLock = (isLock)->
+	_val = {
+		"_global" : isLock
+	}
+	ZkClient.setData(GLOBAL_LOCK, new Buffer(JSON.stringify(_val)), null)
+
+updateVersionControl = (lastModifyTime)->
+	_val = {
+		"lastModifyTime" : lastModifyTime
+	}
+	ZkClient.setData(VERSION_CONTROL, new Buffer(JSON.stringify(_val)))
+
+
+
