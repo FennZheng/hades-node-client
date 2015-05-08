@@ -10,7 +10,7 @@ updateDynamicNode = (val)->
 
 updateGlobalLock = (isLock)->
 	_val = {
-		"_global" : isLock
+		"clientUpdateLock" : isLock
 	}
 	ZkClient.setData(GLOBAL_LOCK, new Buffer(JSON.stringify(_val)), null)
 
