@@ -26,8 +26,8 @@ class RemoteConfig extends EventEmitter
 
 	init : ->
 		return if @_inited
-		ZkClient.init()
 		@_inited = true
+		ZkClient.init()
 		_config = ProjectConfig.getRemoteConfig()
 		@_PROJECT_PATH = CONFIG_ROOT + _config["groupId"] + "/" + _config["projectId"]
 		@_loadTimeout = _config["loadTimeout"] || 10000
@@ -87,8 +87,8 @@ class RemoteConfig extends EventEmitter
 					# add sys configs watch
 					for _key in RemoteConfigCache.SYS_KEYS
 						ZkClient.setDataAutoUpdate(@_buildPath(_key), (err, data)->
-							Log.error("DataAutoUpdate error for name:#{name},error:#{err.stack}") if err
-							RemoteConfigCache.setDataStr(name, data)
+							Log.error("DataAutoUpdate error for name:#{_key},error:#{err.stack}") if err
+							RemoteConfigCache.setDataStr(_key, data)
 						)
 					@.emit(_instance.EVENT_REMOTE_CONFIG_READY)
 			return
@@ -115,19 +115,19 @@ class RemoteConfig extends EventEmitter
 			=>
 				ZkClient.getData(@_buildPath(RemoteConfigCache.KEY_VERSION_CONTROL), (err, data)=>
 					if err
-						Log.error("HadesConfig auto-update loop error: #{err.stack}")
+						Log.error("auto-update loop error: #{err.stack}")
 					else
 						if RemoteConfigCache.isNeedUpdate(new String(data, "utf-8"))
-							Log.debug("HadesConfig auto-update loop check: has updates")
+							Log.debug("auto-update loop check: _versionControl has updates")
 							for _key of @_dynamicKeys
 								ZkClient.getData(@_buildPath(_key), (err, data)->
 									if err
-										Log.error("Auto update loop get Data error: #{err.stack}")
+										Log.error("auto-update loop get Data error: #{err.stack}")
 									else
-										RemoteConfigCache.setDataStr(child, data)
+										RemoteConfigCache.setDataStr(_key, data)
 								)
 						else
-							Log.debug("HadesConfig auto-update loop check: no updates")
+							Log.debug("auto-update loop check: _versionControl has no updates")
 					return
 				)
 		,@_autoUpdateInterval
