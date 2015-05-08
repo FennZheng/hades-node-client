@@ -1,4 +1,4 @@
-config = require("./test_hades_config.json")
+config = require("./zk_test_util_config.json")
 ZK = require('node-zookeeper-client')
 Log = require("../src/module/log/log")
 

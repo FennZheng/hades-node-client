@@ -1,0 +1,7 @@
+{
+	"example1" : "1",
+	"example2" : 2,
+	"example3" : {
+		"example3-1" : "3-1"
+	}
+}

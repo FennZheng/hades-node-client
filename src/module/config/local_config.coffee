@@ -42,7 +42,7 @@ class LocalConfig extends EventEmitter
 			else if path.extname(_fName) == ".json"
 				_key = path.basename(_fName, ".json")
 				if ConfigMap[_key]
-					Log.error("local file name : #{_key} is duplicate!!!! please check!!")
+					throw new Error("local file name : [#{_key}.json] is duplicate!!!! please check!!")
 				ConfigMap[path.basename(_fName, ".json")] = require(_fName)
 		return
 
