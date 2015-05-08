@@ -40,6 +40,9 @@ class LocalConfig extends EventEmitter
 			if _fStat.isDirectory()
 				@_loadDir(_fName)
 			else if path.extname(_fName) == ".json"
+				_key = path.basename(_fName, ".json")
+				if ConfigMap[_key]
+					Log.error("local file name : #{_key} is duplicate!!!! please check!!")
 				ConfigMap[path.basename(_fName, ".json")] = require(_fName)
 		return
 
