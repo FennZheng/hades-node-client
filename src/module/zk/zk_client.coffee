@@ -21,44 +21,139 @@ class ZkClient
 		@_client.connect()
 		return
 
+	exists : (path, val, cb)->
+		@_client.exists(path, null, -1, cb)
+
 	setData : (path, val, cb)->
-		@_client.setData(path, new Buffer(val), -1, (err, stat)->
-			return cb(err, false) if err and cb
+		_buffer = null
+		_buffer = new Buffer(val) if val
+		@_client.setData(path, _buffer, -1, (err, stat)->
+			if err
+				if cb
+					return cb(err, false)
+				else
+					Log.error("setData for path: #{path} error:#{err.stack}")
+					return
+			cb(null, true) if cb
+		)
+
+	create : (path, val, isPersistence, cb)->
+		_nodeMode = ZK.CreateMode.PERSISTENT
+		_nodeMode = ZK.CreateMode.EPHEMERAL if not isPersistence
+		_buffer = null
+		_buffer = new Buffer(val) if val
+		@_client.create(path, _buffer, _nodeMode, (err, path)->
+			if err and err.getCode() != ZK.Exception.NODE_EXISTS
+				if cb
+					return cb(err, false)
+				else
+					Log.error("create for path:#{path} isPersistence:#{isPersistence} error: #{err.stack}")
+					return
+			Log.info("create success for path :#{path} isPersistence:#{isPersistence}")
 			return cb(null, true) if cb
-			return
+		)
+
+
+	addChildren : (parentPath, childPath, meta,  cb)->
+		self = @
+		@_client.exists(parentPath, null, (err, stat)->
+			if err
+				if cb
+					return cb(err, false)
+				else
+					Log.error("addChildren for parentPath: #{parentPath} , childPath: #{childPath} ,error: #{err.stack}")
+					return
+			if stat
+				#exists
+				self.create(childPath, meta, false, cb)
+			else
+				self._client.mkdirp(parentPath, null, null, ZK.CreateMode.PERSISTENT, (err, result)->
+					if err
+						if err.getCode() == ZK.Exception.NODE_EXISTS
+							# created by other client
+							self.create(childPath, meta, false, cb)
+							return
+						if cb
+							return cb(err, false)
+						else
+							Log.error("addChildren create for path :#{childPath} error:#{err.stack}")
+							return
+					self.create(childPath, meta, false, cb)
+				)
 		)
 
 	getData : (path, cb)->
 		@_client.getData(path, null, (err, data, stat)=>
-			return cb(err, null) if err and cb
+			if err
+				if cb
+					return cb(err, null)
+				else
+					Log.error("getData for path:#{path}, error:#{err.stack}")
+					return
 			return cb(null, new String(data, "utf-8")) if cb
-			return
 		)
 
 	getChildren : (path, cb)->
 		@_client.getChildren(path, cb)
 
-	# auto-re-watch, because zk-watcher event only notice once
+	# for config : auto-re-watch
 	setDataAutoUpdate : (path, cb)->
-		@_recursiveFetchData(path, false, cb)
+		@_recFetchNodeData(path, false, cb)
 
-	_recursiveFetchData : (path, isFetchData, cb)->
+	# for service-discovery : auto-re-watch
+	getChildDataAndWatch : (path, cb)->
+		@_recFetchChildData(path, true, cb)
+
+	_recFetchChildData : (path, isFetchData, cb)->
 		#Log.debug("_recursiveFetchData path:#{path}, isFetchData:#{isFetchData}")
-		@_client.getData(path,
+		@_client.getChildren(path,
 			(event)=>
-				return @_recursiveFetchData(path, false, cb) if not event
+				return @_recFetchChildData(path, false, cb) if not event
 				Log.debug("receive event #{event.name} for path:#{path}")
 				switch event.type
-					when ZK.Event.NODE_CREATED then @_recursiveFetchData(path, true, cb)
-					when ZK.Event.NODE_DATA_CHANGED then @_recursiveFetchData(path, true, cb)
+					when ZK.Event.NODE_CREATED then @_recFetchChildData(path, true, cb)
+					when ZK.Event.NODE_CHILDREN_CHANGED then @_recFetchChildData(path, true, cb)
 					else
-						@_recursiveFetchData(path, false, cb)
+						@_recFetchChildData(path, false, cb)
 				return
 			(err, data, stat)->
 				if isFetchData
-					cb(err, null) if err and cb
-					cb(null, new String(data, "utf-8")) if cb
+					#TODO deal with connection loss exception
+					if err
+						if err.getCode() == ZK.Exception.NO_NODE
+							Log.error("NO_NODE found for path: #{path}")
+							return
+						if cb
+							return cb(err, null)
+						else
+							Log.error("auto-update for path:#{path} error:#{err.stack}")
+					return cb(null, new String(data, "utf-8")) if cb
+		)
+
+	_recFetchNodeData : (path, isFetchData, cb)->
+		#Log.debug("_recursiveFetchData path:#{path}, isFetchData:#{isFetchData}")
+		@_client.getData(path,
+			(event)=>
+				return @_recFetchNodeData(path, false, cb) if not event
+				Log.debug("receive event #{event.name} for path:#{path}")
+				switch event.type
+					when ZK.Event.NODE_CREATED then @_recFetchNodeData(path, true, cb)
+					when ZK.Event.NODE_DATA_CHANGED then @_recFetchNodeData(path, true, cb)
+					else
+						@_recFetchNodeData(path, false, cb)
 				return
+			(err, data, stat)->
+				if isFetchData
+					#TODO deal with connection loss exception
+					if err
+						if err.getCode() == ZK.Exception.NO_NODE
+							Log.error("NO_NODE found for path: #{path}")
+							return
+						if cb
+							return cb(err, null)
+						else
+							Log.error("auto-update for path:#{path} error:#{err.stack}")
+					return cb(null, new String(data, "utf-8")) if cb
 		)
 
 

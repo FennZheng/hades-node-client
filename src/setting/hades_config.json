@@ -16,7 +16,8 @@
 	},
 
 	"serviceDiscovery" : {
-		"groupId" : "main"
+		"groupId" : "main",
+		"port" : 9090
 	}
 
 }

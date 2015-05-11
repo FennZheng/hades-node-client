@@ -8,5 +8,4 @@ getLocalIp = ->
 	return null
 
 LOCAL_IP = getLocalIp()
-
 exports.LOCAL_IP = LOCAL_IP
