@@ -50,10 +50,10 @@ class ConfigBundles extends EventEmitter
 			_val = RemoteConfig.get(name)
 		_val
 
-	getDynamic : (name, watcher)->
-		_val = LocalConfig.getDynamic(name, watcher)
+	getDynamic : (name)->
+		_val = LocalConfig.getDynamic(name)
 		if not _val?
-			_val = RemoteConfig.getDynamic(name, watcher)
+			_val = RemoteConfig.getDynamic(name)
 		_val
 
 _instance = new ConfigBundles()

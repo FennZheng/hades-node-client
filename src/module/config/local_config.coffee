@@ -28,7 +28,7 @@ class LocalConfig extends EventEmitter
 		return _val
 
 	# @Override
-	getDynamic : (name, watcher)->
+	getDynamic : (name)->
 		@get(name)
 
 	# 同步递归 读取配置

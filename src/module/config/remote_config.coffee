@@ -38,8 +38,7 @@ class RemoteConfig extends EventEmitter
 	get : (name)->
 		RemoteConfigCache.get name
 
-	# @Override
-	getDynamic : (name, watcher)->
+	getDynamic : (name)->
 		if(@_inited)
 			_val = RemoteConfigCache.get name
 			if _val and not @_dynamicKeys[name]
