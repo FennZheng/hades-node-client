@@ -17,7 +17,6 @@ class ServiceBundles
 
 	register : (serviceId, meta, cb)->
 		_parentPath = @_buildServicePath(serviceId)
-		#TODO add port loading by port
 		_childPath = _parentPath + "/" + LOCAL_IP + "/" + @_PORT
 		ZkClient.addChildren(_parentPath, _childPath, meta, (err, result)->
 			if err
@@ -39,17 +38,6 @@ class ServiceBundles
 					Log.error("ServiceBundles get service list error:#{err.stack}")
 					return
 			return cb(null, data) if cb
-		)
-
-	setData : (path, meta, cb)->
-		ZkClient.setData(path, meta, (err, result)->
-			if err
-				if cb
-					return cb(err, false)
-				else
-					Log.error("setData for path:#{path} error:#{err.stack}")
-					return
-			return cb(null, true) if cb
 		)
 
 	_buildServicePath : (serviceId)->
