@@ -15,5 +15,5 @@ ConfigBundles.on(ConfigBundles.EVENT_CONFIG_FAIL, ->
 )
 ConfigBundles.init(ConfigFile)
 
-#use ./modify_data.coffee to modify zookeeper data
+#use ./modify_data.js to modify zookeeper data
 

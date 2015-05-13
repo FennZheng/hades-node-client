@@ -10,6 +10,13 @@ ServiceBundles.get(TEST_SERVICE_GET, (err, data)->
 	console.log(JSON.stringify(data))
 )
 
-ServiceBundles.register(TEST_SERVICE_REGISTRY, "Meta-ddd", (err, result)->
+ServiceBundles.register(TEST_SERVICE_REGISTRY, 9090, "Meta-ddd", (err, result)->
 	console.log("register result:#{result}, err:#{err}")
 )
+
+ServiceBundles.register(TEST_SERVICE_REGISTRY, 9091, "Meta-ddd", (err, result)->
+	console.log("register result:#{result}, err:#{err}")
+)
+
+
+

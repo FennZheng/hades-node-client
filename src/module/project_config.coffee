@@ -31,11 +31,18 @@ class ProjectConfig
 		@_configs[SERVICE_DISCOVERY]
 
 	_validate : ->
-		@._checkNodeIsNull(SERVICE_DISCOVERY)
+		@._validateConfigSource()
+		._checkNodeIsNull(SERVICE_DISCOVERY)
 		._checkNodeIsNull(REMOTE_CONFIG)
 		._checkNodeIsNull(LOCAL_CONFIG)
 		._checkNodeIsNull(ZOOKEEPER_CONFIG)
 		return true
+
+	_validateConfigSource : ()->
+		_configSource = @_configs.configSource
+		if not _configSource or (_configSource isnt "local" and _configSource isnt "remote")
+			throw new Error("config source is incorrect value:#{_configSource}")
+		@
 
 	_checkNodeIsNull : (node)->
 		@_throwNullEx(node) if not @_configs[node]
@@ -44,6 +51,11 @@ class ProjectConfig
 	_throwNullEx : (nodeType)->
 		throw new Error("#{nodeType} node is null in hades config, please check it!!")
 
+	isConfigFromLocal : ()->
+		@_configs.configSource == "remote"
+
+	isConfigFromRemote : ()->
+		@_configs.configSource == "local"
 
 _instance = new ProjectConfig()
 

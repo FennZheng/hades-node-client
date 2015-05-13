@@ -20,5 +20,10 @@ updateVersionControl = (lastModifyTime)->
 	}
 	ZkClient.setData(VERSION_CONTROL, new Buffer(JSON.stringify(_val)))
 
+#updateDynamicNode("\"{'Can you see me': 'You can you up!'}\"")
+
+updateVersionControl(Date.now())
+
+
 
 

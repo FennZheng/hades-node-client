@@ -1,5 +1,5 @@
 {
-	"configSource" : "mixed",
+	"configSource" : "remote",
 	"zookeeperConf" : {
 		"clusterList" : "localhost:2181",
 		"retries" : 3,
@@ -16,8 +16,7 @@
 	},
 
 	"serviceDiscovery" : {
-		"groupId" : "main",
-		"port" : 9090
+		"groupId" : "main"
 	}
 
 }

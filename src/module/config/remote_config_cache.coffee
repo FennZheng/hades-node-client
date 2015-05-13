@@ -23,7 +23,7 @@ class RemoteConfigCache
 			@_sysData[key] = value
 			return
 		if not @isAllowUpdate()
-			Log.debug("key:#{key} update is not allowed , because LocalIp:#{LOCAL_IP} is not in _whiteIpList:#{@_sysData[KEY_WHITE_IP_LIST]}")
+			Log.debug("key:#{key} update is not allowed , see _globalLock:#{JSON.stringify(@_sysData[KEY_GLOBAL_LOCK])} or compare LocalIp:#{LOCAL_IP} with _whiteIpList:#{@_sysData[KEY_WHITE_IP_LIST]}")
 			return
 		@_userData[key] = value
 		return
