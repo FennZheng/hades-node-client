@@ -13,11 +13,10 @@ class ServiceBundles
 		ZkClient.init()
 		_config = ProjectConfig.getServiceDiscovery()
 		@_GROUP_ID = _config["groupId"]
-		@_PORT = _config["port"]
 
-	register : (serviceId, meta, cb)->
+	register : (serviceId, port, meta, cb)->
 		_parentPath = @_buildServicePath(serviceId)
-		_childPath = _parentPath + "/" + LOCAL_IP + "/" + @_PORT
+		_childPath = _parentPath + "/" + LOCAL_IP + ":" + port
 		ZkClient.addChildren(_parentPath, _childPath, meta, (err, result)->
 			if err
 				if cb
@@ -35,7 +34,7 @@ class ServiceBundles
 				if cb
 					return cb(err, null)
 				else
-					Log.error("ServiceBundles get service list error:#{err.stack}")
+					Log.error("get service list error:#{err.stack}")
 					return
 			return cb(null, data) if cb
 		)
