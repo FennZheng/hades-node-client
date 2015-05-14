@@ -54,7 +54,7 @@ class ZkClient
 		)
 
 
-	addChildren : (parentPath, childPath, meta,  cb)->
+	addChildren : (parentPath, childPath, meta, cb)->
 		self = @
 		@_client.exists(parentPath, null, (err, stat)->
 			if err
