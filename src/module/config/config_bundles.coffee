@@ -31,7 +31,6 @@ class ConfigBundles extends EventEmitter
 				Log.error("RemoteConfig load timeout!!")
 				self.emit(_instance.EVENT_CONFIG_FAIL)
 			)
-			LocalConfig.init()
 			RemoteConfig.init()
 		else if ProjectConfig.isConfigFromLocal()
 			LocalConfig.on(LocalConfig.EVENT_LOCAL_CONFIG_READY,
@@ -40,7 +39,6 @@ class ConfigBundles extends EventEmitter
 				self.emit(_instance.EVENT_CONFIG_READY)
 			)
 			LocalConfig.init()
-			RemoteConfig.init()
 
 	get : (name)->
 		_val = LocalConfig.get(name)

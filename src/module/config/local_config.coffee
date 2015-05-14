@@ -31,6 +31,9 @@ class LocalConfig extends EventEmitter
 	getDynamic : (name)->
 		@get(name)
 
+	getAll : ()->
+		JSON.parse(JSON.stringify(ConfigMap))
+
 	# 同步递归 读取配置
 	_loadDir : (f)->
 		_files = fs.readdirSync(f)

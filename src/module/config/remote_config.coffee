@@ -118,10 +118,18 @@ class RemoteConfig extends EventEmitter
 					else
 						if RemoteConfigCache.isNeedUpdate(new String(data, "utf-8"))
 							Log.debug("auto-update loop check: _versionControl has updates")
+							for _key of RemoteConfigCache.SYS_KEYS
+								ZkClient.getData(@_buildPath(_key), (err, data)->
+									if err
+										Log.error("auto-update loop get sys Data error: #{err.stack}")
+									else
+										RemoteConfigCache.setDataStr(_key, data)
+								)
+							#TODO to make sure getData return in sequence
 							for _key of @_dynamicKeys
 								ZkClient.getData(@_buildPath(_key), (err, data)->
 									if err
-										Log.error("auto-update loop get Data error: #{err.stack}")
+										Log.error("auto-update loop get user Data error: #{err.stack}")
 									else
 										RemoteConfigCache.setDataStr(_key, data)
 								)
