@@ -1,0 +1,25 @@
+{
+	"configSource" : "remote",
+	"zookeeperConf" : {
+		"clusterList" : "localhost:2181",
+		"retries" : 3,
+		"sessionTimeout" : 60
+	},
+
+	"localConf" : {
+		"confRoot" : "/Users/vernonzheng/Project/github/hades-node-client/tool/import_setting/"
+	},
+
+	"remoteConf" : {
+		"groupId" : "main",
+		"projectId" : "import_test"
+	},
+
+	"serviceDiscovery" : {
+		"groupId" : "main"
+	},
+	"monitor" : {
+		"disable" : false,
+		"port" : 12312
+	}
+}
