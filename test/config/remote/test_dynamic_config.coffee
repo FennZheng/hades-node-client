@@ -2,7 +2,7 @@ ConfigBundles = require("../../../src/module/config/config_bundles").ConfigBundl
 ZkClient = require("../../zk_test_util").ZkClient
 ZkClient.init()
 ConfigFile = "/Users/vernonzheng/Project/github/hades-node-client/test/setting/test_hades_remote.json"
-TEST_REMOTE_NODE = "testDynamic"
+TEST_REMOTE_NODE = "tiny_video_redis"
 
 
 ConfigBundles.on(ConfigBundles.EVENT_CONFIG_READY, ->

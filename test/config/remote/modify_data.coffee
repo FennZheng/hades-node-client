@@ -5,6 +5,9 @@ WHITE_IP_LIST = "_whiteIpList"
 GLOBAL_LOCK = "_globalLock"
 VERSION_CONTROL = "_versionControl"
 
+_val = {
+	"test":"test1"
+}
 updateDynamicNode = (val)->
 	ZkClient.setData(TEST_REMOTE_NODE, new Buffer(val), null)
 
@@ -22,7 +25,7 @@ updateVersionControl = (lastModifyTime)->
 
 #updateDynamicNode("\"{'Can you see me': 'You can you up!'}\"")
 
-updateVersionControl(Date.now())
+updateDynamicNode(JSON.stringify(_val))
 
 
 
