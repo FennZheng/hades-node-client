@@ -12,7 +12,7 @@
 
 	"remoteConf" : {
 		"groupId" : "main",
-		"projectId" : "import_test"
+		"projectId" : "ad"
 	},
 
 	"serviceDiscovery" : {

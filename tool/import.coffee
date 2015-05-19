@@ -62,8 +62,8 @@ _validateJSON = (str)->
 		JSON.parse(str)
 		return true
 	catch err
-		return err
-
+		console.error err.stack
+		return false
 
 LocalConfig.on(LocalConfig.EVENT_LOCAL_CONFIG_READY,
 	=>
