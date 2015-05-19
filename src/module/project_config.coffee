@@ -52,10 +52,10 @@ class ProjectConfig
 		throw new Error("#{nodeType} node is null in hades config, please check it!!")
 
 	isConfigFromLocal : ()->
-		@_configs.configSource == "remote"
+		@_configs.configSource == "local"
 
 	isConfigFromRemote : ()->
-		@_configs.configSource == "local"
+		@_configs.configSource == "remote"
 
 _instance = new ProjectConfig()
 

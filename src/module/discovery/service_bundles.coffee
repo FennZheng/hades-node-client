@@ -29,12 +29,12 @@ class ServiceBundles
 
 	get : (serviceId, cb)->
 		_path = @_buildServicePath(serviceId)
-		ZkClient.getChildDataAndWatch(_path, (err, data)->
+		ZkClient.getChildDataAndWatch(_path, (err, key, data)->
 			if err
 				if cb
 					return cb(err, null)
 				else
-					Log.error("get service list error:#{err.stack}")
+					Log.error("get service for key:#{key} list error:#{err.stack}")
 					return
 			return cb(null, data) if cb
 		)

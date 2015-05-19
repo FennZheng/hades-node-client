@@ -18,16 +18,6 @@ class RemoteConfigCache
 	init : ->
 		return
 
-	_set : (key, value)->
-		if key in SYS_KEYS
-			@_sysData[key] = value
-			return
-		if not @isAllowUpdate()
-			Log.debug("key:#{key} update is not allowed , see _globalLock:#{JSON.stringify(@_sysData[KEY_GLOBAL_LOCK])} or compare LocalIp:#{LOCAL_IP} with _whiteIpList:#{@_sysData[KEY_WHITE_IP_LIST]}")
-			return
-		@_userData[key] = value
-		return
-
 	setDataStr : (key, str)->
 		Log.debug("setDataStr key:#{key} str:#{str}")
 		return if not str
@@ -41,11 +31,12 @@ class RemoteConfigCache
 		@_userData[key]
 
 	# check whiteIpList & globalLock
+	# TODO add cache
 	isAllowUpdate : ->
 		#TODO test performance
 		return false if @_isClientUpdateLock()
 		_whiteIpList = @_sysData[KEY_WHITE_IP_LIST]
-		return true if not _whiteIpList or not util.isArray(_whiteIpList)
+		return true if not _whiteIpList or not util.isArray(_whiteIpList) or _whiteIpList.length == 0
 		return true if LOCAL_IP in _whiteIpList
 		return false
 
@@ -60,6 +51,16 @@ class RemoteConfigCache
 			Log.error("isNeedUpdate _remoteVerData json parse object error:#{err.stack}")
 			return false
 
+	_set : (key, value)->
+		if key in SYS_KEYS
+			@_sysData[key] = value
+			return
+		if not @isAllowUpdate()
+			Log.debug("key:#{key} update is not allowed , see _globalLock:#{JSON.stringify(@_sysData[KEY_GLOBAL_LOCK])} or compare LocalIp:#{LOCAL_IP} with _whiteIpList:#{@_sysData[KEY_WHITE_IP_LIST]}")
+			return
+		@_userData[key] = value
+		return
+
 	_isDataExpire : (remoteTime)->
 		return false if not remoteTime
 		_localTime = @_getLocalLastModifyTime()
@@ -70,8 +71,7 @@ class RemoteConfigCache
 	_isClientUpdateLock : ()->
 		_globalLock = @_sysData[KEY_GLOBAL_LOCK]
 		return false if not _globalLock
-		_clientUpdateLock = _globalLock.clientUpdateLock
-		return true if _clientUpdateLock
+		return true if _globalLock.clientUpdateLock
 		return false
 
 	_getLocalLastModifyTime : ->

@@ -43,11 +43,8 @@ class RemoteConfig extends EventEmitter
 			_val = RemoteConfigCache.get name
 			if _val and not @_dynamicKeys[name]
 				@_dynamicKeys[name] = true
-				ZkClient.setDataAutoUpdate(@_buildPath(name), (err, data)->
-					Log.debug("DataAutoUpdate find updates for name : #{name}, get data: #{data}")
-					Log.error("DataAutoUpdate error for name:#{name},error:#{err.stack}") if err
-					RemoteConfigCache.setDataStr(name, data)
-				)
+				@_setDataAutoUpdate(name)
+
 			return _val
 		else
 			return null
@@ -85,10 +82,7 @@ class RemoteConfig extends EventEmitter
 					_instance._setAutoUpdateLoop()
 					# add sys configs watch
 					for _key in RemoteConfigCache.SYS_KEYS
-						ZkClient.setDataAutoUpdate(@_buildPath(_key), (err, data)->
-							Log.error("DataAutoUpdate error for name:#{_key},error:#{err.stack}") if err
-							RemoteConfigCache.setDataStr(_key, data)
-						)
+						@_setDataAutoUpdate(_key)
 					@.emit(_instance.EVENT_REMOTE_CONFIG_READY)
 			return
 		)
@@ -118,21 +112,11 @@ class RemoteConfig extends EventEmitter
 					else
 						if RemoteConfigCache.isNeedUpdate(new String(data, "utf-8"))
 							Log.debug("auto-update loop check: _versionControl has updates")
-							for _key of RemoteConfigCache.SYS_KEYS
-								ZkClient.getData(@_buildPath(_key), (err, data)->
-									if err
-										Log.error("auto-update loop get sys Data error: #{err.stack}")
-									else
-										RemoteConfigCache.setDataStr(_key, data)
-								)
+							for _key in RemoteConfigCache.SYS_KEYS
+								@_updateByKey(_key)
 							#TODO to make sure getData return in sequence
-							for _key of @_dynamicKeys
-								ZkClient.getData(@_buildPath(_key), (err, data)->
-									if err
-										Log.error("auto-update loop get user Data error: #{err.stack}")
-									else
-										RemoteConfigCache.setDataStr(_key, data)
-								)
+							for _key in @_dynamicKeys
+								@_updateByKey(_key)
 						else
 							Log.debug("auto-update loop check: _versionControl has no updates")
 					return
@@ -140,6 +124,20 @@ class RemoteConfig extends EventEmitter
 		,@_autoUpdateInterval
 		)
 
+	_setDataAutoUpdate : (name)->
+		ZkClient.setDataAutoUpdate(@_buildPath(name), (err, key, data)->
+			Log.debug("DataAutoUpdate find updates for key : #{key}, get data: #{data}")
+			Log.error("DataAutoUpdate error for key:#{key},error:#{err.stack}") if err
+			RemoteConfigCache.setDataStr(key, data)
+		)
+
+	_updateByKey : (key)->
+		ZkClient.getData(@_buildPath(key), (err, data)=>
+			if err
+				Log.error("_updateByKey get Data for key:#{key} error: #{err.stack}")
+			else
+				RemoteConfigCache.setDataStr(key, data)
+		)
 
 _instance = new RemoteConfig()
 

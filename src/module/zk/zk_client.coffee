@@ -18,9 +18,27 @@ class ZkClient
 			retries: _retries ,
 			sessionTimeout: _sessionTimeout
 		})
+		@_initEventListener()
 		@_client.connect()
 		return
 
+	_initEventListener : ->
+		@_client.on("disconnected", ()->
+			console.log("ZKClient receive event:disconnected")
+		)
+		@_client.on("connected", ()->
+			console.log("ZKClient receive event:connected")
+		)
+		@_client.on("connectedReadOnly", ()->
+			console.log("ZKClient receive event:connectedReadOnly")
+		)
+		@_client.on("expired", ()->
+			console.log("ZKClient receive event:expired")
+		)
+		@_client.on("authenticationFailed", ()->
+			console.log("ZKClient receive event:authenticationFailed")
+		)
+		
 	exists : (path, val, cb)->
 		@_client.exists(path, null, -1, cb)
 
@@ -116,7 +134,7 @@ class ZkClient
 					else
 						@_recFetchChildData(path, false, cb)
 				return
-			(err, data, stat)->
+			(err, data, stat)=>
 				if isFetchData
 					#TODO deal with connection loss exception
 					if err
@@ -124,10 +142,10 @@ class ZkClient
 							Log.error("NO_NODE found for path: #{path}")
 							return
 						if cb
-							return cb(err, null)
+							return cb(err, null, null)
 						else
 							Log.error("auto-update for path:#{path} error:#{err.stack}")
-					return cb(null, new String(data, "utf-8")) if cb
+					return cb(null, @_getKeyByPath(path), new String(data, "utf-8")) if cb
 		)
 
 	_recFetchNodeData : (path, isFetchData, cb)->
@@ -142,7 +160,7 @@ class ZkClient
 					else
 						@_recFetchNodeData(path, false, cb)
 				return
-			(err, data, stat)->
+			(err, data, stat)=>
 				if isFetchData
 					#TODO deal with connection loss exception
 					if err
@@ -150,12 +168,15 @@ class ZkClient
 							Log.error("NO_NODE found for path: #{path}")
 							return
 						if cb
-							return cb(err, null)
+							return cb(err, null, null)
 						else
 							Log.error("auto-update for path:#{path} error:#{err.stack}")
-					return cb(null, new String(data, "utf-8")) if cb
+					return cb(null, @_getKeyByPath(path), new String(data, "utf-8")) if cb
 		)
 
+	_getKeyByPath : (path)->
+		return "" if not path
+		path.replace(new RegExp(".+/"),"")
 
 _instance = new ZkClient()
 exports.ZkClient = _instance

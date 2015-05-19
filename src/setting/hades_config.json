@@ -17,6 +17,9 @@
 
 	"serviceDiscovery" : {
 		"groupId" : "main"
+	},
+	"monitor" : {
+		"disable" : false,
+		"port" : 12312
 	}
-
 }
