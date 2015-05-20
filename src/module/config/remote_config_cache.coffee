@@ -36,7 +36,7 @@ class RemoteConfigCache
 		#TODO test performance
 		return false if @_isClientUpdateLock()
 		_whiteIpList = @_sysData[KEY_WHITE_IP_LIST]
-		return true if not _whiteIpList or not util.isArray(_whiteIpList) or _whiteIpList.length == 0
+		return true if not _whiteIpList or not util.isArray(_whiteIpList) or _whiteIpList.length <= 0
 		return true if LOCAL_IP in _whiteIpList
 		return false
 
