@@ -1,4 +1,7 @@
-ServiceBundles = require("../src/module/discovery/service_bundles").ServiceBundles
+Hades = require("../src/index")
+Hades.initLog(null)
+ServiceBundles = Hades.ServiceBundles
+
 ConfigFile = "/Users/vernonzheng/Project/github/hades-node-client/src/setting/hades_config.json"
 
 TEST_SERVICE_REGISTRY = "ad"
