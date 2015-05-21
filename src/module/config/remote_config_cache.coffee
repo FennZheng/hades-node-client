@@ -86,7 +86,7 @@ class RemoteConfigMonitor
 	getSysData : ->
 		JSON.stringify(@_configRef._sysData)
 
-	getAllUserData : ->
+	getUserData : ->
 		JSON.stringify(@_configRef._userData)
 
 	getUserDataByKey : (key)->
