@@ -5,12 +5,12 @@ ConfigFile = "/Users/vernonzheng/Project/github/hades-node-client/test/setting/t
 TEST_REMOTE_NODE = "testStatic"
 
 
-ConfigBundles.on(ConfigBundles.EVENT_CONFIG_READY, ->
+ConfigBundles.on(ConfigBundles.EVENT_READY, ->
 	setInterval( =>
 		console.log("node value:"+ConfigBundles.get(TEST_REMOTE_NODE))
 	,1000)
 )
-ConfigBundles.on(ConfigBundles.EVENT_CONFIG_FAIL, ->
+ConfigBundles.on(ConfigBundles.EVENT_FAIL, ->
 	console.log("ConfigBundles receive EVENT_CONFIG_FAIL!!")
 )
 ConfigBundles.init(ConfigFile)
