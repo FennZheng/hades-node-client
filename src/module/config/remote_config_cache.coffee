@@ -19,7 +19,6 @@ class RemoteConfigCache
 		return
 
 	setDataStr : (key, str)->
-		Log.debug("setDataStr key:#{key} str:#{str}")
 		return if not str
 		try
 			_obj = JSON.parse(str)
@@ -31,9 +30,7 @@ class RemoteConfigCache
 		@_userData[key]
 
 	# check whiteIpList & globalLock
-	# TODO add cache
 	isAllowUpdate : ->
-		#TODO test performance
 		return false if @_isClientUpdateLock()
 		_whiteIpList = @_sysData[KEY_WHITE_IP_LIST]
 		return true if not _whiteIpList or not util.isArray(_whiteIpList) or _whiteIpList.length <= 0

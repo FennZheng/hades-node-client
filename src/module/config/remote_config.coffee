@@ -27,12 +27,16 @@ class RemoteConfig extends EventEmitter
 	init : ->
 		return if @_inited
 		@_inited = true
-		ZkClient.init()
-		_config = ProjectConfig.getRemoteConfig()
-		@_PROJECT_PATH = CONFIG_ROOT + _config["groupId"] + "/" + _config["projectId"]
-		@_loadTimeout = _config["loadTimeout"] || 10000
-		@_autoUpdateInterval = _config["autoUpdateInterval"] || 10000
-		@_load()
+		ZkClient.init((err, result)=>
+			if not result
+				@.emit(_instance.EVENT_REMOTE_CONFIG_TIMEOUT, err)
+				return
+			_config = ProjectConfig.getRemoteConfig()
+			@_PROJECT_PATH = CONFIG_ROOT + _config["groupId"] + "/" + _config["projectId"]
+			@_loadTimeout = _config["loadTimeout"] || 10000
+			@_autoUpdateInterval = _config["autoUpdateInterval"] || 10000
+			@_load()
+		)
 
 	# @Override
 	get : (name)->
@@ -90,8 +94,7 @@ class RemoteConfig extends EventEmitter
 	_setLoadTimeout : ->
 		setTimeout(=>
 			if @_loadState != LOAD_STATE.LOAD_COMPLETE
-				@.emit(_instance.EVENT_REMOTE_CONFIG_TIMEOUT)
-				Log.error("Load all config from zk timeout(#{@_loadTimeout}ms)")
+				@.emit(_instance.EVENT_REMOTE_CONFIG_TIMEOUT, new Error("Load all config from zookeeper timeout(#{@_loadTimeout}ms)"))
 		,@_loadTimeout)
 
 
@@ -108,17 +111,17 @@ class RemoteConfig extends EventEmitter
 			=>
 				ZkClient.getData(@_buildPath(RemoteConfigCache.KEY_VERSION_CONTROL), (err, data)=>
 					if err
-						Log.error("auto-update loop error: #{err.stack}")
+						Log.error("config auto-update loop error: #{err.stack}")
 					else
 						if RemoteConfigCache.isNeedUpdate(new String(data, "utf-8"))
-							Log.debug("auto-update loop check: _versionControl has updates")
+							Log.debug("config auto-update loop check: _versionControl has updates")
 							for _key in RemoteConfigCache.SYS_KEYS
 								@_updateByKey(_key)
 							#TODO to make sure getData return in sequence
 							for _key in @_dynamicKeys
 								@_updateByKey(_key)
 						else
-							Log.debug("auto-update loop check: _versionControl has no updates")
+							Log.debug("config auto-update loop check: _versionControl has no updates")
 					return
 				)
 		,@_autoUpdateInterval
@@ -140,7 +143,7 @@ class RemoteConfig extends EventEmitter
 		)
 
 _instance = new RemoteConfig()
-
+_instance.setMaxListeners(0)
 
 _instance.EVENT_REMOTE_CONFIG_READY = EVENT_REMOTE_CONFIG_READY
 _instance.EVENT_REMOTE_CONFIG_TIMEOUT = EVENT_REMOTE_CONFIG_TIMEOUT
