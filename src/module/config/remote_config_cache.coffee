@@ -1,6 +1,6 @@
 util = require('util')
 LOCAL_IP = require("../util/ip_util").LOCAL_IP
-Log = require("../log/log")
+Log = require("../log").Log
 
 NONE_JSON = "{}"
 KEY_WHITE_IP_LIST = "_whiteIpList"

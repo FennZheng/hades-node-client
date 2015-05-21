@@ -2,8 +2,9 @@
 	"configSource" : "remote",
 	"zookeeperConf" : {
 		"clusterList" : "localhost:2181",
+		"connectTimeout" : 2000,
 		"retries" : 3,
-		"sessionTimeout" : 60
+		"sessionTimeout" : 10000
 	},
 
 	"localConf" : {
@@ -16,7 +17,9 @@
 	},
 
 	"serviceDiscovery" : {
-		"groupId" : "main"
+		"groupId" : "main",
+		"localCacheDir" : "/Users/vernonzheng/Project/github/hades-node-client/src/setting/",
+		"mode": "normal"
 	},
 	"monitor" : {
 		"disable" : false,

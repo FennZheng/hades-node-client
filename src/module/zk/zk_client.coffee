@@ -1,33 +1,48 @@
 ZK = require('node-zookeeper-client')
 ProjectConfig = require("../project_config").ProjectConfig
-Log = require("../log/log")
+Log = require("../log").Log
 
 class ZkClient
 	constructor : ->
 		@_inited = false
 		@_client = null
+		@isConnected = false
 
-	init : ->
-		return if @_inited
+	init :(cb) ->
+		return cb(null, true) if @_inited
 		_config = ProjectConfig.getZookeeperConf()
 		_clusterList = _config.clusterList
 		_retries = _config.retries || 3
 		_sessionTimeout = _config.sessionTimeout || 10000
+		_connectTimeout = _config.connectTimeout || 2000
 
 		@_client = ZK.createClient(_clusterList, {
 			retries: _retries ,
 			sessionTimeout: _sessionTimeout
 		})
 		@_initEventListener()
-		@_client.connect()
+		@_connect(_connectTimeout, cb)
 		return
+
+	_connect : (connectTimeout, cb)->
+		_timerId = setTimeout(->
+			cb(new Error("ZkClient connect timeout(#{connectTimeout}ms)!!"), false)
+		,connectTimeout)
+		@_client.once("connected", ()=>
+			clearTimeout(_timerId)
+			@isConnected = true
+			cb(null, true)
+		)
+		@_client.connect()
 
 	_initEventListener : ->
 		@_client.on("disconnected", ()->
 			console.log("ZKClient receive event:disconnected")
+			@isConnected = false
 		)
 		@_client.on("connected", ()->
 			console.log("ZKClient receive event:connected")
+			@isConnected = true
 		)
 		@_client.on("connectedReadOnly", ()->
 			console.log("ZKClient receive event:connectedReadOnly")

@@ -1,7 +1,7 @@
 ZkClient = require('../zk/zk_client').ZkClient
 ProjectConfig = require("../project_config").ProjectConfig
 RemoteConfigCache = require('./remote_config_cache').RemoteConfigCache
-Log = require("../log/log")
+Log = require("../log").Log
 EventEmitter = require('events').EventEmitter
 
 EVENT_REMOTE_CONFIG_READY = "EVENT_REMOTE_CONFIG_READY"

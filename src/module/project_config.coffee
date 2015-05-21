@@ -1,4 +1,4 @@
-Log = require("./log/log")
+Log = require("./log").Log
 path = require("path")
 
 SERVICE_DISCOVERY = "serviceDiscovery"

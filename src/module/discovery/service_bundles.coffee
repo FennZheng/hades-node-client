@@ -1,5 +1,5 @@
 ZkClient = require("../zk/zk_client").ZkClient
-Log = require("../log/log")
+Log = require("../log").Log
 LOCAL_IP = require("../util/ip_util").LOCAL_IP
 EventEmitter = require('events').EventEmitter
 Util = require("util")

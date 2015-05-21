@@ -1,0 +1,4 @@
+{
+	"name": "service_bundles",
+	"main" : "./service_bundles.js"
+}

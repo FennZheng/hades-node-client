@@ -1,4 +1,4 @@
-Log = require("../log/log")
+Log = require("../log/").Log
 LocalConfig = require('./local_config').LocalConfig
 RemoteConfig = require('./remote_config').RemoteConfig
 EventEmitter = require('events').EventEmitter

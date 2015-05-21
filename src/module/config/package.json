@@ -1,0 +1,4 @@
+{
+	"name": "config_bundles",
+	"main" : "./config_bundles.js"
+}

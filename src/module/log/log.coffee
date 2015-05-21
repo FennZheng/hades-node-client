@@ -1,19 +1,43 @@
 require("./../util/date.js")
 
-isDebugEnable = true
+class Log
+	constructor : ->
+		@_logger = null
+		@_hasLogger = false
+		@isDebugEnable = false
 
-debug = (msg)->
-	console.log("[#{_getTime()}][DEBUG] #{msg}") if isDebugEnable
+	init : (logger)->
+		if not logger
+			console.log("hades-node-client use console.log instead, cause by: logger is null")
+			return
+		@_hasLogger = true
+		@isDebugEnable = logger.isDebugEnable?()
 
-info = (msg)->
-	console.log("[#{_getTime()}][INFO] #{msg}")
+	debug : (msg)->
+		if @_hasLogger
+			@_logger.debug(msg)
+		else
+			console.log("[#{@_getTime()}][Hades-node-client][DEBUG] #{msg}") if @isDebugEnable
 
-error = (msg)->
-	console.error("[#{_getTime()}][ERROR] #{msg}")
+	info : (msg)->
+		if @_hasLogger
+			@_logger.info(msg)
+		else
+			console.log("[#{@_getTime()}][Hades-node-client][INFO] #{msg}")
 
-_getTime = ->
-	new Date().format("yyyy-MM-dd HH:mm:ss.S")
+	error : (msg)->
+		if @_hasLogger
+			@_logger.error(msg)
+		else
+			console.error("[#{@_getTime()}][Hades-node-client][ERROR] #{msg}")
 
-exports.debug = debug
-exports.info = info
-exports.error = error
+	_getTime : ->
+		new Date().format("yyyy-MM-dd HH:mm:ss.S")
+
+_instance = new Log()
+
+init = (logger)->
+	_instance.init(logger)
+
+exports.Log = _instance
+exports.init = init

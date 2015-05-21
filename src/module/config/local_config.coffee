@@ -2,7 +2,7 @@ fs = require('fs')
 path = require('path')
 EventEmitter = require('events').EventEmitter
 ProjectConfig = require("../project_config").ProjectConfig
-Log = require("../log/log")
+Log = require("../log").Log
 
 ## store
 ConfigMap = {}
