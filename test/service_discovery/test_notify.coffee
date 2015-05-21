@@ -5,6 +5,22 @@ TEST_SERVICE_GET = "ad"
 
 ServiceBundles.init(ConfigFile)
 
-ServiceBundles.get(TEST_SERVICE_GET, (err, data)->
-	console.log(JSON.stringify(data))
+_eventId1 = "event1"
+_eventId2 = "event2"
+
+ServiceBundles.on(ServiceBundles.EVENT_READY, ()->
+	ServiceBundles.watch(TEST_SERVICE_GET, _eventId1)
 )
+ServiceBundles.on(ServiceBundles.EVENT_FAIL, (err)->
+	console.error("ServiceBundles init error:#{err.stack}")
+)
+
+ServiceBundles.on(_eventId1, (data)->
+	console.log("receive new event:#{_eventId1} data:#{data}")
+)
+
+ServiceBundles.on(_eventId2, (data)->
+	console.log("receive new event:#{_eventId2} data:#{data}")
+)
+
+
