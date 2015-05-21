@@ -1,13 +1,18 @@
+require("./../util/date.js")
+
 isDebugEnable = true
 
 debug = (msg)->
-	console.log("[DEBUG] #{msg}") if isDebugEnable
+	console.log("[#{_getTime()}][DEBUG] #{msg}") if isDebugEnable
 
 info = (msg)->
-	console.log("[INFO] #{msg}")
+	console.log("[#{_getTime()}][INFO] #{msg}")
 
 error = (msg)->
-	console.error("[ERROR] #{msg}")
+	console.error("[#{_getTime()}][ERROR] #{msg}")
+
+_getTime = ->
+	new Date().format("yyyy-MM-dd HH:mm:ss.S")
 
 exports.debug = debug
 exports.info = info
