@@ -1,0 +1,10 @@
+{
+	"name": "tool",
+	"version": "0.0.1",
+	"description": "Node client tool for Hades(configuration center)",
+	"dependencies": {
+		"node-zookeeper-client": "0.2.2"
+	},
+	"author": "vernonzheng",
+	"license": "Apache License 2.0"
+}

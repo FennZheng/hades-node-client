@@ -1,14 +1,13 @@
-ProjectConfig = require("../src/module/project_config").ProjectConfig
-LocalConfig = require("../src/module/config/local_config").LocalConfig
 ZkClient = require("./lib/zk_tool_util").ZkClient
-configFile = process.cwd() + "/tool.json"
-ProjectConfig.init(configFile)
+toolConfig = require("./tool.json")
+ZkClient.init(toolConfig)
+fs = require("fs")
+path = require("path")
 
-ZkClient.init()
+# local config map
+ConfigMap = {}
 
-console.log("configFile path:#{configFile}")
 # import sys data, _globalLock, _whiteIpList, _versionControl
-
 _SYS_KEY = {
 	"GlobalLock" : {
 		"name": "_globalLock",
@@ -33,7 +32,7 @@ _importUserData = (userData)->
 	console.log("start import user data")
 	if not userData
 		console.eror("userData is null")
-		process.exit("-1")
+		return
 	for _item of userData
 		if _item and userData[_item]
 			_setData(_item, JSON.stringify(userData[_item]))
@@ -47,7 +46,7 @@ _importSysData = ->
 _setData = (key, val)->
 	if not _validateJSON(val)
 		console.error("setData for key:#{key}, content is not a json, value:#{val}")
-		process.exit(-1)
+		return
 
 	ZkClient.setData(key, val, (err, result)->
 		if err
@@ -56,20 +55,33 @@ _setData = (key, val)->
 		console.log("setData for key:#{key}, success")
 	)
 
-
 _validateJSON = (str)->
 	try
 		JSON.parse(str)
 		return true
 	catch err
-		console.error err.stack
-		return false
+		return err
 
-LocalConfig.on(LocalConfig.EVENT_LOCAL_CONFIG_READY,
-	=>
-		console.log("HadesConfig import_setting load completed")
-		_userData = LocalConfig.getAll()
+# sync
+_loadDir = (f)->
+	_files = fs.readdirSync(f)
+	for _item of _files
+		_fName = path.join(f, _files[_item])
+		_fStat = fs.lstatSync(_fName)
+		if _fStat.isDirectory()
+			@_loadDir(_fName)
+		else if path.extname(_fName) == ".json"
+			_key = path.basename(_fName, ".json")
+			if ConfigMap[_key]
+				throw new Error("local file name : [#{_key}.json] is duplicate!!!! please check!!")
+			ConfigMap[path.basename(_fName, ".json")] = require(_fName)
+	return
+
+run = ()->
+	_importSettingRoot = process.cwd() + "/import_setting/"
+	_loadDir(_importSettingRoot)
+	_importUserData(ConfigMap)
+	if toolConfig.initSysConfig
 		_importSysData()
-		_importUserData(_userData)
-)
-LocalConfig.init()
+
+run()
