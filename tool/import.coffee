@@ -6,6 +6,10 @@ path = require("path")
 
 # local config map
 ConfigMap = {}
+ImportSettingRoot = process.cwd() + "/import_setting/"
+task_count = 0
+task_record = 0
+start_time = null
 
 # import sys data, _globalLock, _whiteIpList, _versionControl
 _SYS_KEY = {
@@ -48,11 +52,14 @@ _setData = (key, val)->
 		console.error("setData for key:#{key}, content is not a json, value:#{val}")
 		return
 
-	ZkClient.setData(key, val, (err, result)->
+	ZkClient.setData(key, val, (err, result)=>
 		if err
 			console.error("setData for key:#{key}, error:#{err.stack}")
-			process.exit(-1)
-		console.log("setData for key:#{key}, success")
+		else
+			console.log("setData for key:#{key} successfully")
+		task_count -= 1
+		if task_count <= 0
+			_finishLog()
 	)
 
 _validateJSON = (str)->
@@ -77,11 +84,19 @@ _loadDir = (f)->
 			ConfigMap[path.basename(_fName, ".json")] = require(_fName)
 	return
 
+_finishLog = ->
+	console.log("===== all imports finished (count:#{task_record},cost:#{(Date.now()-start_time)}ms) =====")
+
 run = ()->
-	_importSettingRoot = process.cwd() + "/import_setting/"
-	_loadDir(_importSettingRoot)
-	_importUserData(ConfigMap)
+	start_time = Date.now()
+	_loadDir(ImportSettingRoot)
+	task_count = Object.keys(ConfigMap).length
+	task_record = task_count
 	if toolConfig.initSysConfig
+		task_count += Object.keys(_SYS_KEY).length
+		task_record = task_count
 		_importSysData()
+	_importUserData(ConfigMap)
+	console.log("task_counttask_count:#{task_count}")
 
 run()

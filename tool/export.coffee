@@ -9,6 +9,7 @@ EXPORTS_ROOT = process.cwd() + "/export_setting/"
 PROJECT_PATH = "/hades/configs/" + toolConfig.groupId + "/" + toolConfig.projectId
 LOAD_TIMEOUT = 5000
 IsLoadCompleted = false
+start_time = null
 
 _writeFile = (name, obj)->
 	_filePath = Path.normalize(Path.join(EXPORTS_ROOT, name + ".json"))
@@ -18,6 +19,10 @@ _dumpToDisk = ->
 	for _item of RemoteConfigCache
 		_writeFile(_item, RemoteConfigCache[_item])
 		console.log("write sysData: #{_item}.json successfully")
+	_finishLog()
+
+_finishLog = ->
+	console.log("===== all exports finished (count:#{Object.keys(RemoteConfigCache).length},cost:#{(Date.now()-start_time)}ms) =====")
 
 _setLoadTimeout = ->
 	setTimeout(=>
@@ -64,6 +69,7 @@ _load = ->
 	ZkClient.getChildren(PROJECT_PATH, _initConfigMap)
 
 run = ->
+	start_time = Date.now()
 	_load()
 
 run()
