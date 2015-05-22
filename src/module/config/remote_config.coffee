@@ -17,12 +17,14 @@ CONFIG_ROOT = "/hades/configs/"
 
 class RemoteConfig extends EventEmitter
 
-	constructor : ->
+	constructor : (monitor)->
 		@_inited = false
 		@_loadState = LOAD_STATE.NO_LOADING
 		@_loadTimeout = null
 		@_autoUpdateInterval = null
 		@_dynamicKeys = {}
+		@_monitor = monitor
+		@_monitor.setDynamicKeyRef(@_dynamicKeys)
 
 	init : ->
 		return if @_inited
@@ -52,6 +54,9 @@ class RemoteConfig extends EventEmitter
 			return _val
 		else
 			return null
+
+	getDynamicKeys : ->
+		@_dynamicKeys
 
 	_buildPath : (configName)->
 		@_PROJECT_PATH + "/" + configName
@@ -114,12 +119,12 @@ class RemoteConfig extends EventEmitter
 						Log.error("config auto-update loop error: #{err.stack}")
 					else
 						if RemoteConfigCache.isNeedUpdate(new String(data, "utf-8"))
+							@_monitor.increaseAutoUpdateTime()
 							Log.debug("config auto-update loop check: _versionControl has updates")
 							for _key in RemoteConfigCache.SYS_KEYS
-								@_updateByKey(_key)
-							#TODO to make sure getData return in sequence
+								@_fetchKeyAndUpdate(_key)
 							for _key in @_dynamicKeys
-								@_updateByKey(_key)
+								@_fetchKeyAndUpdate(_key)
 						else
 							Log.debug("config auto-update loop check: _versionControl has no updates")
 					return
@@ -128,13 +133,15 @@ class RemoteConfig extends EventEmitter
 		)
 
 	_setDataAutoUpdate : (name)->
-		ZkClient.setDataAutoUpdate(@_buildPath(name), (err, key, data)->
+		ZkClient.setDataAutoUpdate(@_buildPath(name), (err, key, data)=>
+			@_monitor.increaseUpdateTimes()
 			Log.debug("DataAutoUpdate find updates for key : #{key}, get data: #{data}")
 			Log.error("DataAutoUpdate error for key:#{key},error:#{err.stack}") if err
 			RemoteConfigCache.setDataStr(key, data)
 		)
 
-	_updateByKey : (key)->
+	_fetchKeyAndUpdate : (key)->
+		@_monitor.increaseUpdateTimes()
 		ZkClient.getData(@_buildPath(key), (err, data)=>
 			if err
 				Log.error("_updateByKey get Data for key:#{key} error: #{err.stack}")
@@ -142,10 +149,58 @@ class RemoteConfig extends EventEmitter
 				RemoteConfigCache.setDataStr(key, data)
 		)
 
-_instance = new RemoteConfig()
+class RemoteConfigMonitor
+	constructor : ->
+		@_updateTimes = 0
+		@_cacheUpdateTimesByNotify = 0
+		@_autoUpdateTimes = 0
+		@_dynamicKeyRef = {}
+		@_status = {
+			"updateTimes" : 0,
+			"cacheKeySize" : 0,
+			"autoUpdateTimes" : 0,
+			"dynamicKeyCount" : 0
+		}
+
+	increaseUpdateTimes : ->
+		console.log("increaseUpdateTimes")
+		@_updateTimes += 1
+
+	increaseAutoUpdateTime : ->
+		console.log("increaseAutoUpdateTime")
+		@_autoUpdateTimes += 1
+
+	setDynamicKeyRef : (dynamicKeys)->
+		@_dynamicKeyRef = dynamicKeys
+
+	getStatus : ->
+		@_status.updateTime = @_updateTimes
+		@_status.cacheKeySize = RemoteConfigCache.getDataKeySize()
+		@_status.autoUpdateTimes = @_autoUpdateTimes
+		@_status.dynamicKeyCount = Object.keys(@_dynamicKeyRef).length
+		JSON.stringify(@_status, null, 4)
+
+	getContent : ->
+		tmp ={
+			"dynamicKeys" : Object.keys[@_dynamicKeyRef],
+			"userDataKeys" : RemoteConfigCache.getUserDataKeys()
+		}
+		JSON.stringify(tmp, null, 4)
+
+	getUserDataByKey : (key)->
+		RemoteConfigCache.getUserDataByKey(key)
+
+	getSysDataByKey : (key)->
+		RemoteConfigCache.getSysDataByKey(key)
+
+
+_monitor = new RemoteConfigMonitor()
+
+_instance = new RemoteConfig(_monitor)
 _instance.setMaxListeners(0)
 
 _instance.EVENT_REMOTE_CONFIG_READY = EVENT_REMOTE_CONFIG_READY
 _instance.EVENT_REMOTE_CONFIG_TIMEOUT = EVENT_REMOTE_CONFIG_TIMEOUT
 
 exports.RemoteConfig = _instance
+exports.RemoteConfigMonitor = _monitor

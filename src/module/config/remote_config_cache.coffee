@@ -48,6 +48,18 @@ class RemoteConfigCache
 			Log.error("isNeedUpdate _remoteVerData json parse object error:#{err.stack}")
 			return false
 
+	getDataKeySize : ->
+		Object.keys(@_userData).length + Object.keys(@_sysData).length
+
+	getUserDataKeys : ->
+		Object.keys(@_userData)
+
+	getUserDataByKey : (key)->
+		JSON.parse(JSON.stringify(@_userData[key]))
+
+	getSysDataByKey : (key)->
+		JSON.parse(JSON.stringify(@_sysData[key]))
+
 	_set : (key, value)->
 		if key in SYS_KEYS
 			@_sysData[key] = value
@@ -79,28 +91,8 @@ class RemoteConfigCache
 		return _localTime
 
 
-class RemoteConfigMonitor
-	constructor : (remoteConfigCache)->
-		@_configRef = remoteConfigCache
-
-	getSysData : ->
-		JSON.stringify(@_configRef._sysData)
-
-	getUserData : ->
-		JSON.stringify(@_configRef._userData)
-
-	getUserDataByKey : (key)->
-		_val = @_configRef._userData[key]
-		return JSON.stringify(_val) if not _val
-		return NONE_JSON
-
-
-
 _instance = new RemoteConfigCache()
 _instance.KEY_VERSION_CONTROL = KEY_VERSION_CONTROL
 _instance.SYS_KEYS = SYS_KEYS
 
-_monitor = new RemoteConfigMonitor(_instance)
-
 exports.RemoteConfigCache = _instance
-exports.RemoteConfigMonitor = _monitor
