@@ -98,7 +98,7 @@ class RemoteConfig extends EventEmitter
 		,@_loadTimeout)
 
 
-	_createLoadCheck :(taskCount) ->
+	_createLoadCheck : (taskCount) ->
 		_taskCount = taskCount
 		_loadTimerId = @_setLoadTimeout()
 		{

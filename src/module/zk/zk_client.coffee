@@ -189,9 +189,10 @@ class ZkClient
 					return cb(null, @_getKeyByPath(path), new String(data, "utf-8")) if cb
 		)
 
+	@_keyRegex = new RegExp(".+/")
 	_getKeyByPath : (path)->
 		return "" if not path
-		path.replace(new RegExp(".+/"),"")
+		path.replace(@_keyRegex,"")
 
 _instance = new ZkClient()
 exports.ZkClient = _instance

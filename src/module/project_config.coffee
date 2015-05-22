@@ -11,6 +11,7 @@ class ProjectConfig
 		@_configs = null
 		@_inited = false
 
+	# param : file path
 	init : (confFile)->
 		throw new Error("HadesConfig config file is null!!") if not confFile
 		return if @_inited
