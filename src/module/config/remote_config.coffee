@@ -173,14 +173,14 @@ class RemoteConfigMonitor
 	setDynamicKeyRef : (dynamicKeys)->
 		@_dynamicKeyRef = dynamicKeys
 
-	getStatus : ->
+	getStatusStr : ->
 		@_status.updateTime = @_updateTimes
 		@_status.cacheKeySize = RemoteConfigCache.getDataKeySize()
 		@_status.autoUpdateTimes = @_autoUpdateTimes
 		@_status.dynamicKeyCount = Object.keys(@_dynamicKeyRef).length
 		JSON.stringify(@_status, null, 4)
 
-	getContent : ->
+	getContentStr : ->
 		tmp ={
 			"dynamicKeys" : Object.keys[@_dynamicKeyRef],
 			"userDataKeys" : RemoteConfigCache.getUserDataKeys()
