@@ -1,6 +1,7 @@
 ZK = require('node-zookeeper-client')
 ProjectConfig = require("../project_config").ProjectConfig
 Log = require("../log").Log
+KEY_REGEX = new RegExp(".+/")
 
 class ZkClient
 	constructor : ->
@@ -189,14 +190,10 @@ class ZkClient
 					return cb(null, @_getKeyByPath(path), new String(data, "utf-8")) if cb
 		)
 
-	@_keyRegex = new RegExp(".+/")
 	_getKeyByPath : (path)->
 		return "" if not path
-		path.replace(@_keyRegex,"")
+		path.replace(KEY_REGEX,"")
 
 _instance = new ZkClient()
 exports.ZkClient = _instance
-
-
-
 
