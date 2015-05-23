@@ -22,9 +22,18 @@ class RemoteConfigCache
 		return if not str
 		try
 			_obj = JSON.parse(str)
-			@_set(key, _obj)
+			@_set(key, _obj, true)
 		catch err
 			Log.error("setDataStr error for key :#{key}, may be JSON Object error:#{err}")
+
+	# only use when init that ignoring all the checks
+	setDataStrWithoutCheck : (key, str)->
+		return if not str
+		try
+			_obj = JSON.parse(str)
+			@_set(key, _obj, false)
+		catch err
+			Log.error("setDataStrWithoutCheck error for key :#{key}, may be JSON Object error:#{err}")
 
 	get : (key)->
 		@_userData[key]
@@ -54,17 +63,17 @@ class RemoteConfigCache
 	getUserDataKeys : ->
 		Object.keys(@_userData)
 
-	getUserDataByKey : (key)->
-		JSON.parse(JSON.stringify(@_userData[key]))
+	getUserDataStrByKey : (key)->
+		JSON.stringify(@_userData[key], null, 4)
 
-	getSysDataByKey : (key)->
-		JSON.parse(JSON.stringify(@_sysData[key]))
+	getSysDataStr : ->
+		JSON.stringify(@_sysData, null, 4)
 
-	_set : (key, value)->
+	_set : (key, value, needCheck)->
 		if key in SYS_KEYS
 			@_sysData[key] = value
 			return
-		if not @isAllowUpdate()
+		if needCheck and not @isAllowUpdate()
 			Log.debug("key:#{key} update is not allowed , see _globalLock:#{JSON.stringify(@_sysData[KEY_GLOBAL_LOCK])} or compare LocalIp:#{LOCAL_IP} with _whiteIpList:#{@_sysData[KEY_WHITE_IP_LIST]}")
 			return
 		@_userData[key] = value

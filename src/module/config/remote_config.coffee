@@ -84,7 +84,7 @@ class RemoteConfig extends EventEmitter
 			if err
 				Log.error("_fillConfigItem err:"+err.stack)
 			else
-				RemoteConfigCache.setDataStr(child, data)
+				RemoteConfigCache.setDataStrWithoutCheck(child, data)
 				if --_check.count <= 0
 					clearTimeout(_check.timer)
 					_instance._loadState = LOAD_STATE.LOAD_COMPLETE
@@ -163,11 +163,9 @@ class RemoteConfigMonitor
 		}
 
 	increaseUpdateTimes : ->
-		console.log("increaseUpdateTimes")
 		@_updateTimes += 1
 
 	increaseAutoUpdateTime : ->
-		console.log("increaseAutoUpdateTime")
 		@_autoUpdateTimes += 1
 
 	setDynamicKeyRef : (dynamicKeys)->
@@ -187,11 +185,14 @@ class RemoteConfigMonitor
 		}
 		JSON.stringify(tmp, null, 4)
 
-	getUserDataByKey : (key)->
-		RemoteConfigCache.getUserDataByKey(key)
+	getUserDataStrByKey : (key)->
+		RemoteConfigCache.getUserDataStrByKey(key)
 
-	getSysDataByKey : (key)->
-		RemoteConfigCache.getSysDataByKey(key)
+	getSysDataStr : ->
+		RemoteConfigCache.getSysDataStr()
+
+	getUserDataKeysStr : ->
+		JSON.stringify(RemoteConfigCache.getUserDataKeys(), null, 4)
 
 
 _monitor = new RemoteConfigMonitor()
