@@ -14,9 +14,9 @@ updateGlobalLock = (isLock)->
 	ZkClient.setData(GLOBAL_LOCK, new Buffer(JSON.stringify(_val)), null)
 
 
-#updateGlobalLock(true)
-#then modify_data.js to modify data , log output update is not allow
 updateGlobalLock(false)
+#then modify_data.js to modify data , log output update is not allow
+#updateGlobalLock(false)
 #then modify_data.js to modify data , log output update is allow
 
 

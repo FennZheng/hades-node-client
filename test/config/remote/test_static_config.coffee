@@ -4,7 +4,7 @@ ZkClient.init()
 ConfigFile = "/Users/vernonzheng/Project/github/hades-node-client/test/setting/test_hades_remote.json"
 TEST_REMOTE_NODE = "testStatic"
 
-
+# don't use both test_dynamic_config and test_static_config
 ConfigBundles.on(ConfigBundles.EVENT_READY, ->
 	setInterval( =>
 		console.log("node value:"+ConfigBundles.get(TEST_REMOTE_NODE))
