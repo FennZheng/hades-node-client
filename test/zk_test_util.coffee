@@ -9,17 +9,31 @@ class ZkClient
 
 	init : ->
 		return if @_inited
-		_config = config.zookeeperConf
-		_clusterList = _config.clusterList
-		_retries = _config.retries || 3
-		_sessionTimeout = _config.sessionTimeout || 10000
-		@_groupId = config.remoteConf.groupId
-		@_projectId = config.remoteConf.projectId
-
-		@_client = ZK.createClient(_clusterList, {
-			retries: _retries ,
-			sessionTimeout: _sessionTimeout
+		@_groupId = config.groupId
+		@_projectId = config.projectId
+		@_client = ZK.createClient(config.zookeeper, {
+			retries: 3 ,
+			sessionTimeout: 10000
 		})
+		#监听所有事件
+		###看代码有，disconnected，connected，connectedReadOnly，expired，authenticationFailed
+			this.emit('disconnected');
+        ###
+		@_client.on("disconnected", ()->
+			console.log("ZKClient receive event:disconnected")
+		)
+		@_client.on("connected", ()->
+			console.log("ZKClient receive event:connected")
+		)
+		@_client.on("connectedReadOnly", ()->
+			console.log("ZKClient receive event:connectedReadOnly")
+		)
+		@_client.on("expired", ()->
+			console.log("ZKClient receive event:expired")
+		)
+		@_client.on("authenticationFailed", ()->
+			console.log("ZKClient receive event:authenticationFailed")
+		)
 		@_client.connect()
 		return
 
