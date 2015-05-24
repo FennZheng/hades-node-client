@@ -70,6 +70,7 @@ class RemoteConfigCache
 		JSON.stringify(@_sysData, null, 4)
 
 	_set : (key, value, needCheck)->
+		Log.debug("_set key:#{key} needCheck:#{needCheck}")
 		if key in SYS_KEYS
 			@_sysData[key] = value
 			return
