@@ -5,6 +5,7 @@ SERVICE_DISCOVERY = "serviceDiscovery"
 REMOTE_CONFIG = "remoteConf"
 LOCAL_CONFIG = "localConf"
 ZOOKEEPER_CONFIG = "zookeeperConf"
+MONITOR = "monitor"
 
 class ProjectConfig
 	constructor : ->
@@ -31,12 +32,16 @@ class ProjectConfig
 	getServiceDiscovery : ->
 		@_configs[SERVICE_DISCOVERY]
 
+	getMonitor : ->
+		@_configs[MONITOR]
+
 	_validate : ->
 		@._validateConfigSource()
 		._checkNodeIsNull(SERVICE_DISCOVERY)
 		._checkNodeIsNull(REMOTE_CONFIG)
 		._checkNodeIsNull(LOCAL_CONFIG)
 		._checkNodeIsNull(ZOOKEEPER_CONFIG)
+		._checkNodeIsNull(MONITOR)
 		return true
 
 	_validateConfigSource : ()->
