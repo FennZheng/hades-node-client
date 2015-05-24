@@ -14,7 +14,7 @@ class ZkClient
 		_config = ProjectConfig.getZookeeperConf()
 		_clusterList = _config.clusterList
 		_retries = _config.retries || 3
-		_sessionTimeout = _config.sessionTimeout || 10000
+		_sessionTimeout = _config.sessionTimeout || 2000
 		_connectTimeout = _config.connectTimeout || 2000
 
 		@_client = ZK.createClient(_clusterList, {
@@ -38,21 +38,21 @@ class ZkClient
 
 	_initEventListener : ->
 		@_client.on("disconnected", ()->
-			console.log("ZKClient receive event:disconnected")
+			Log.info("ZKClient receive event:disconnected")
 			@isConnected = false
 		)
 		@_client.on("connected", ()->
-			console.log("ZKClient receive event:connected")
+			Log.info("ZKClient receive event:connected")
 			@isConnected = true
 		)
 		@_client.on("connectedReadOnly", ()->
-			console.log("ZKClient receive event:connectedReadOnly")
+			Log.info("ZKClient receive event:connectedReadOnly")
 		)
 		@_client.on("expired", ()->
-			console.log("ZKClient receive event:expired")
+			Log.info("ZKClient receive event:expired")
 		)
 		@_client.on("authenticationFailed", ()->
-			console.log("ZKClient receive event:authenticationFailed")
+			Log.info("ZKClient receive event:authenticationFailed")
 		)
 		
 	exists : (path, val, cb)->
@@ -157,6 +157,8 @@ class ZkClient
 						if err.getCode() == ZK.Exception.NO_NODE
 							Log.error("NO_NODE found for path: #{path}")
 							return
+						else if err.getCode() == ZK.Exception.CONNECTION_LOSS
+							@_client.connect()
 						if cb
 							return cb(err, null, null)
 						else
@@ -183,6 +185,8 @@ class ZkClient
 						if err.getCode() == ZK.Exception.NO_NODE
 							Log.error("NO_NODE found for path: #{path}")
 							return
+						else if err.getCode() == ZK.Exception.CONNECTION_LOSS
+							@_client.connect()
 						if cb
 							return cb(err, null, null)
 						else
