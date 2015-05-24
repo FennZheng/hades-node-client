@@ -1,0 +1,4 @@
+{
+	"name": "monitor",
+	"main" : "./monitor_server.js"
+}
