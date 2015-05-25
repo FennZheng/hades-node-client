@@ -54,8 +54,7 @@ class ZkClient
 		@_client.on("authenticationFailed", ()->
 			Log.info("ZKClient receive event:authenticationFailed")
 		)
-		@_client.ont("")
-		
+
 	exists : (path, val, cb)->
 		@_client.exists(path, null, -1, cb)
 
