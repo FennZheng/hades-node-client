@@ -54,6 +54,7 @@ class ZkClient
 		@_client.on("authenticationFailed", ()->
 			Log.info("ZKClient receive event:authenticationFailed")
 		)
+		@_client.ont("")
 		
 	exists : (path, val, cb)->
 		@_client.exists(path, null, -1, cb)
@@ -157,8 +158,6 @@ class ZkClient
 						if err.getCode() == ZK.Exception.NO_NODE
 							Log.error("NO_NODE found for path: #{path}")
 							return
-						else if err.getCode() == ZK.Exception.CONNECTION_LOSS
-							@_client.connect()
 						if cb
 							return cb(err, null, null)
 						else
@@ -185,8 +184,6 @@ class ZkClient
 						if err.getCode() == ZK.Exception.NO_NODE
 							Log.error("NO_NODE found for path: #{path}")
 							return
-						else if err.getCode() == ZK.Exception.CONNECTION_LOSS
-							@_client.connect()
 						if cb
 							return cb(err, null, null)
 						else
