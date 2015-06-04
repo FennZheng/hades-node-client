@@ -70,7 +70,7 @@ class RemoteConfig extends EventEmitter
 		# global cache ,clear it up
 		RemoteConfigCache.init()
 		if err
-			Log(err.stack)
+			Log.error(err.stack)
 		if children?
 			_check = @_createLoadCheck(children.length)
 			for child in children
