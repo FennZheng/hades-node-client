@@ -4,12 +4,13 @@ class Log
 	constructor : ->
 		@_logger = null
 		@_hasLogger = false
-		@isDebugEnable = false
+		@isDebugEnable = true
 
 	init : (logger)->
 		if not logger
 			console.log("hades-node-client use console.log instead, cause by: logger is null")
 			return
+		@_logger = logger
 		@_hasLogger = true
 		@isDebugEnable = logger.isDebugEnable?()
 
