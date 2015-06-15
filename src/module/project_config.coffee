@@ -13,11 +13,11 @@ class ProjectConfig
 		@_inited = false
 
 	# param : file path
-	init : (confFile)->
+	init : (confObj)->
 		throw new Error("HadesConfig config file is null!!") if not confFile
 		return if @_inited
 		@_inited = true
-		@_configs = require(path.normalize(confFile))
+		@_configs = confObj
 		@_validate()
 
 	getZookeeperConf : ->

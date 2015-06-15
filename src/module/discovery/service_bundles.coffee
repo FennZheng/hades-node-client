@@ -32,8 +32,8 @@ class ServiceBundles extends EventEmitter
 		@_recoveryMode = false
 		@_cache = {}
 
-	init :(confFile) ->
-		ProjectConfig.init(confFile)
+	init :(confObj) ->
+		ProjectConfig.init(confObj)
 		ZkClient.init((err, result)=>
 			if not result
 				@.emit(_instance.EVENT_FAIL, err)

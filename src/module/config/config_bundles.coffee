@@ -15,10 +15,10 @@ class ConfigBundles extends EventEmitter
 		@_remoteConfigInited = false
 		@_inited = false
 
-	init : (confFile)->
+	init : (confObj)->
 		return if @_inited
 		@_inited = true
-		ProjectConfig.init(confFile)
+		ProjectConfig.init(confObj)
 		self = @
 		if ProjectConfig.isConfigFromRemote()
 			RemoteConfig.once(RemoteConfig.EVENT_REMOTE_CONFIG_READY,
